@@ -20,7 +20,7 @@ class LeftArrowIntent extends Intent {
   const LeftArrowIntent();
 }
 
-bool curserModifierset = true;
+bool curserModifierSet = true;
 int markerIndex = 0;
 
 Future<String> getFilePath(String fileName) async {
@@ -162,7 +162,7 @@ class GPSMapState extends ConsumerState<GPSMap> {
           if (event.logicalKey == LogicalKeyboardKey.space) {
             print('Spaced press');
             setState(() {
-              curserModifierset = !curserModifierset;
+              curserModifierSet = !curserModifierSet;
             });
           }
         }
@@ -177,7 +177,7 @@ class GPSMapState extends ConsumerState<GPSMap> {
             RightArrowIntent: CallbackAction<RightArrowIntent>(
               onInvoke: (intent) {
                 print('Right Arrow Pressed');
-                if (curserModifierset) {
+                if (curserModifierSet) {
                   _moveMarker(30); // Shift + Right Arrow
                 } else {
                   _moveMarker(1); // Regular Right Arrow
@@ -188,7 +188,7 @@ class GPSMapState extends ConsumerState<GPSMap> {
             LeftArrowIntent: CallbackAction<LeftArrowIntent>(
               onInvoke: (intent) {
                 print('Left Arrow Pressed');
-                if (curserModifierset) {
+                if (curserModifierSet) {
                   _moveMarker(-30); // Shift + Left Arrow
                 } else {
                   _moveMarker(-1); // Regular Left Arrow
@@ -201,7 +201,7 @@ class GPSMapState extends ConsumerState<GPSMap> {
             onFocusChange: (hasFocus) {
               if (!hasFocus) {
                 setState(() {
-                  curserModifierset = false; // Reset shift when focus is lost
+                  curserModifierSet = false; // Reset shift when focus is lost
                 });
               }
             },
@@ -248,7 +248,7 @@ class GPSMapState extends ConsumerState<GPSMap> {
                               painter: GPSMapPainter(screenPoints, gpsPoints),
                             ),
                             Positioned(
-                                left: 10,
+                                left: 5,
                                 bottom: 0,
                                 child: Column(
                                   children: [
@@ -258,7 +258,7 @@ class GPSMapState extends ConsumerState<GPSMap> {
                                           widget.parsedFilename
                                           : '',
                                       style: const TextStyle(
-                                          color: Colors.white, fontSize: 12),
+                                          color: Colors.white, fontSize: 13),
                                     ),
                                   ],
                                 )),
@@ -267,14 +267,15 @@ class GPSMapState extends ConsumerState<GPSMap> {
                                 bottom: 20,
                                 child: Column(
                                   children: [
+                                    constraints.maxWidth > 200 ?
                                     Text(
-                                     curserModifierset
+                                     curserModifierSet
                                           ? // display venu
                                           'Fast curser mode on, press spacebar to reset'
                                           : '',
                                       style: const TextStyle(
                                           color: Colors.white, fontSize: 16),
-                                    ),
+                                    ): const Text('')
                                   ],
                                 )),
                           ],

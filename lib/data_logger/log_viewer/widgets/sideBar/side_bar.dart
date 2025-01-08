@@ -43,6 +43,7 @@ class _SideMenuState extends ConsumerState<SideBar> {
         .contains(widget.fileName);
 
     return SingleChildScrollView(
+     // physics: FixedExtentScrollPhysics(parent: ClampingScrollPhysics()),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
@@ -52,7 +53,7 @@ class _SideMenuState extends ConsumerState<SideBar> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(28,30,28,15),
+                  padding: const EdgeInsets.fromLTRB(28,30,28,0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -121,20 +122,20 @@ class _SideMenuState extends ConsumerState<SideBar> {
                 
                 const ChooseScreenMenu(),
                 const SizedBox(
-                  height: 30,
+                  height: 20,
                 ),
                 const ChooseLapMenu(),
                 const SizedBox(
-                  height: 30,
+                  height: 20,
                 ),
                 const SideBarValues(),
                 // Placeholder(),
                 const SizedBox(
-                  height: 30,
+                  height: 20,
                 ),
                 Container(
                   width: 220,
-                  height: 300,
+                  height: 280,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: const Color(0xFF21222D),

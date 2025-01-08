@@ -131,6 +131,11 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               ).toString(),
               valuesTextColor: valueTextColor),
           const SizedBox(height: 20),
+          const ValuesText(
+              title: 'Throttle (%)',
+              value: '100',
+              valuesTextColor: valueTextColor),
+          const SizedBox(height: 20),
           ValuesText(
               title: 'RPM:',
               value: findClosestEntry(
@@ -165,6 +170,11 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
           const ValuesText(
               title: 'Oil Pressure (PSI)',
               value: '63',
+              valuesTextColor: valueTextColor),
+          const SizedBox(height: 20),
+          const ValuesText(
+              title: 'Battery (Volts)',
+              value: '12.5',
               valuesTextColor: valueTextColor),
           const SizedBox(height: 20),
           ValuesText(

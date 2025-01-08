@@ -9,7 +9,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'data_logger/ble_folder/screens/bluetooth_off_screen.dart';
 import 'data_logger/ble_folder/screens/scan_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 
 final colorScheme = ColorScheme.fromSeed(
   brightness: Brightness.dark,
