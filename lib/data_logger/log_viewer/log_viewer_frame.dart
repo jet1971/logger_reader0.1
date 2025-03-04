@@ -1,13 +1,15 @@
 import 'package:ble1/data_logger/log_viewer/engine_data_graph.dart';
+import 'package:ble1/data_logger/log_viewer/example_graph.dart';
 import 'package:ble1/data_logger/log_viewer/logger_first_screen.dart';
 import 'package:ble1/data_logger/log_viewer/sync_line_chart.dart';
+import 'package:ble1/data_logger/log_viewer/widgets/debug.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/sideBar/another_example.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/sideBar/side_bar.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:ble1/util/responsive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ble1/data_logger/provider/chosen_content_provider.dart';
-import 'package:ble1/data_logger/log_viewer/example_graph.dart';
 
 class LogViewerFrame extends ConsumerWidget {
   const LogViewerFrame({
@@ -25,9 +27,9 @@ class LogViewerFrame extends ConsumerWidget {
     if (chosenContent == 'track_report') {
       mainContent = LoggerFirstScreen(fileName: fileName);
     } else if (chosenContent == 'engine_data') {
-      mainContent = EngineDataGraph();
+      mainContent = const EngineDataGraph();
     } else if (chosenContent == 'suspension_data') {
-      mainContent = const LineChartSample2();
+      mainContent =  DebugWidget();
     } else if (chosenContent == 'section_times') {
       mainContent =  const SyncedLineChart();
     } 
@@ -57,14 +59,14 @@ class LogViewerFrame extends ConsumerWidget {
               Expanded(
                 flex: 2,
                 child: SizedBox(
-                  child: SideBar(
+                  child: SideBar(                      // SideMenuWidget(),
                     fileName: fileName,
                   ),
                 ),
               ),
             Expanded(
               flex: 8,
-              child: mainContent,
+              child: mainContent,                       //  mainContent,
 
               // LoggerFirstScreen(fileName: fileName,),
 

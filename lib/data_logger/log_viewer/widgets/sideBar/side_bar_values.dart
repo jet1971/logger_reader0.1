@@ -48,54 +48,40 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
   @override
   Widget build(BuildContext context) {
 //-----------------------------------------------------------------------------------------------------
-    double value = 0;
+
     final targetTimestamp =
         ref.watch(currentTimeStampProvider); // Current index
-    // final speed = ref.watch(dataLogProvider.notifier).gpsData[1000]['speed'];
-    //final speed = 22;
-    // final engTempData = ref.watch(dataLogProvider.notifier).temperatureData; // The list of maps
-    // final rpmData =
-    //     ref.watch(dataLogProvider.notifier).rpmData; // The list of maps
 
-    double? findClosestEntry({
+    num? findClosestEntry({
       required int? targetTimestamp,
       required List<Map<String, dynamic>> data,
       required String timestampKey,
       required String valueKey,
     }) {
-      if (targetTimestamp == null) {
-        print('The Current Timestamp is null');
-        return null; // Indicate that no valid data was found
-      }
+      if (targetTimestamp == null) return null;
+      if (data.isEmpty) return null;
 
-      if (data.isEmpty) {
-        print('speed is empty');
-        return null;
-      }
-
-      // Filter out invalid entries
       final validData = data.where((entry) {
         return entry[timestampKey] != null && entry[valueKey] != null;
       }).toList();
+      if (validData.isEmpty) return null;
 
-      if (validData.isEmpty) {
-        print('No valid data available');
-        return null;
-      }
-
-      // Find the closest entry
       final closestData = validData.reduce((closest, current) {
-        final closestTimestamp = closest[timestampKey] as int;
-        final currentTimestamp = current[timestampKey] as int;
-
-        return (currentTimestamp - targetTimestamp).abs() <
-                (closestTimestamp - targetTimestamp).abs()
+        final closestTs = closest[timestampKey] as int;
+        final currentTs = current[timestampKey] as int;
+        return (currentTs - targetTimestamp).abs() <
+                (closestTs - targetTimestamp).abs()
             ? current
             : closest;
       });
-      value = closestData[valueKey] as double;
-      return value; // Return the closest data
+
+      // Now it could be a double or int in the map
+      final rawValue = closestData[valueKey];
+      // If you truly want to unify it, you'd store them all as double or int, but at least
+      // num? can hold either
+      return rawValue as num?;
     }
+
 //-----------------------------------------------------------------------------------------------------
 
     String formatMilliseconds(int milliseconds) {
@@ -125,22 +111,27 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               title: 'Speed: (mph)',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).gpsData,
+                data: ref.watch(dataLogProvider.notifier).allData,
                 timestampKey: 'timestamp',
                 valueKey: 'speed',
               ).toString(),
               valuesTextColor: valueTextColor),
           const SizedBox(height: 20),
-          const ValuesText(
+          ValuesText(
               title: 'Throttle (%)',
-              value: '100',
+              value: findClosestEntry(
+                targetTimestamp: targetTimestamp,
+                data: ref.watch(dataLogProvider.notifier).allData,
+                timestampKey: 'timestamp',
+                valueKey: 'tps',
+              ).toString(),
               valuesTextColor: valueTextColor),
           const SizedBox(height: 20),
           ValuesText(
               title: 'RPM:',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).rpmData,
+                data: ref.watch(dataLogProvider.notifier).allData,
                 timestampKey: 'timestamp',
                 valueKey: 'rpm',
               ).toString(),
@@ -151,30 +142,71 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               //value: engTemp.toString(),
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).temperatureData,
+                data: ref.watch(dataLogProvider.notifier).allData,
                 timestampKey: 'timestamp',
-                valueKey: 'temperature',
+                valueKey: 'coolantTemperature',
               ).toString(),
               valuesTextColor: valueTextColor),
           const SizedBox(height: 20),
-          const ValuesText(
+          ValuesText(
               title: 'Airbox Temp (C)',
-              value: '14',
+              value: findClosestEntry(
+                targetTimestamp: targetTimestamp,
+                data: ref.watch(dataLogProvider.notifier).allData,
+                timestampKey: 'timestamp',
+                valueKey: 'airTemperature',
+              ).toString(),
               valuesTextColor: valueTextColor),
-          const SizedBox(height: 20),
-          const ValuesText(
-              title: 'AFR ( :1 )',
-              value: '12.77',
+                  const SizedBox(height: 20),
+          ValuesText(
+              title: 'Airbox Pressure (PSI)',
+              value: findClosestEntry(
+                targetTimestamp: targetTimestamp,
+                data: ref.watch(dataLogProvider.notifier).allData,
+                timestampKey: 'timestamp',
+                valueKey: 'airboxPressure',
+              ).toString(),
               valuesTextColor: valueTextColor),
-          const SizedBox(height: 20),
-          const ValuesText(
+                  const SizedBox(height: 20),
+          ValuesText(
               title: 'Oil Pressure (PSI)',
-              value: '63',
+              value: findClosestEntry(
+                targetTimestamp: targetTimestamp,
+                data: ref.watch(dataLogProvider.notifier).allData,
+                timestampKey: 'timestamp',
+                valueKey: 'oilPressure',
+              ).toString(),
               valuesTextColor: valueTextColor),
           const SizedBox(height: 20),
-          const ValuesText(
+          ValuesText(
+              title: 'AFR ( :1 )',
+              value: findClosestEntry(
+                targetTimestamp: targetTimestamp,
+                data: ref.watch(dataLogProvider.notifier).allData,
+                timestampKey: 'timestamp',
+                valueKey: 'afr',
+              ).toString(),
+              valuesTextColor: valueTextColor),
+      
+          const SizedBox(height: 20),
+          ValuesText(
               title: 'Battery (Volts)',
-              value: '12.5',
+              value: findClosestEntry(
+                targetTimestamp: targetTimestamp,
+                data: ref.watch(dataLogProvider.notifier).allData,
+                timestampKey: 'timestamp',
+                valueKey: 'batteryVoltage',
+              ).toString(),
+              valuesTextColor: valueTextColor),
+                       const SizedBox(height: 20),
+          ValuesText(
+              title: 'Spare',
+              value: findClosestEntry(
+                targetTimestamp: targetTimestamp,
+                data: ref.watch(dataLogProvider.notifier).allData,
+                timestampKey: 'timestamp',
+                valueKey: 'spare',
+              ).toString(),
               valuesTextColor: valueTextColor),
           const SizedBox(height: 20),
           ValuesText(

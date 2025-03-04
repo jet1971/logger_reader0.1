@@ -4,6 +4,7 @@ import 'package:ble1/data_logger/log_viewer/log_viewer_frame.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:path/path.dart' as path;
 import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/local_file_list_provider.dart';
@@ -42,7 +43,7 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
   Future loadData(String fileName, WidgetRef ref) async {
     fileContents = await readFromFile(fileName);
     // Update the provider with the new file list
-    ref.read(dataLogProvider.notifier).setDatalog(fileContents);
+    ref.read(dataLogProvider.notifier).setDatalog(Uint8List.fromList(fileContents.codeUnits));
     ref.read(filenameProvider.notifier).setFileName(fileName);
   }
 

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 import 'package:ble1/data_logger/models/server_file_details.dart';
@@ -26,7 +28,7 @@ class ServerItemInfo extends ConsumerStatefulWidget {
 
 class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
   bool saved = false;
-  String fileContents = '';
+  Uint8List fileContents = Uint8List(0);
 
   @override
   void initState() {
@@ -43,7 +45,7 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
   }
 
   Future loadData(String fileName, WidgetRef ref) async {
-    fileContents = await readFromFile('/$fileName');
+    fileContents = Uint8List.fromList((await readFromFile('/$fileName')).codeUnits);
     print("Loaded data: $fileContents");
     // Update the provider with the new file list
     //

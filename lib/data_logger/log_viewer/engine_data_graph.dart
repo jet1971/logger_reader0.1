@@ -12,8 +12,7 @@ List<FlSpot> _convertToSpots(List<Map<String, dynamic>> dataLog,
 
   // Iterate through the list and try to convert every three values into a GPSPoint
   for (int i = 0; i < dataLog.length; i++) {
-    // Ensure there are enough values to create a GPSPoint
-    // if (i + 2 < dataLog.length) {
+ 
     String currentParsed =
         "${(dataLog[i][dataName])},${(dataLog[i][timestamp])},";
     // print('current parsed $currentParsed');
@@ -38,9 +37,6 @@ List<FlSpot> _convertToSpots(List<Map<String, dynamic>> dataLog,
 
         double difference = (data - lastValidPoint).abs();
 
-        // Set your threshold value
-        // double threshold =
-        //     17000; // make adjustable in the page settings one day?
 
         // If the differences exceed the threshold, skip this point
         if (difference > threshold) {
@@ -51,7 +47,7 @@ List<FlSpot> _convertToSpots(List<Map<String, dynamic>> dataLog,
         // If the point is valid and passes the threshold check, add it
         points.add(FlSpot(elapsedTime.toDouble(), data));
         lastValidPoint = data; // Update the last valid point
-        //    print('lastvalidPoint $lastValidPoint');
+            print('lastvalidPoint $lastValidPoint');
         lastParsed = currentParsed; // Update the last parsed values
       } catch (e) {
         print(
@@ -110,15 +106,15 @@ class EngineDataGraph extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gpsData = ref.watch(dataLogProvider.notifier).gpsData;
-    final rpmData = ref.watch(dataLogProvider.notifier).rpmData;
+    final gpsData = ref.watch(dataLogProvider.notifier).allData;
+    final rpmData = ref.watch(dataLogProvider.notifier).allData;
 
     final parsedFilename = ref.watch(
         filenameProvider); // This will give the formatted filename or null
 
-    List<FlSpot> rpmSpots = _convertToSpots(rpmData, 'rpm', 'timestamp',
-        17000); //the data, the data key, timestamp key, plausability tolerence value
- //   List<FlSpot> gpsSpots = _convertToSpots(gpsData, 'speed', 'timestamp', 1000);
+    List<FlSpot> rpmSpots = _convertToSpots(rpmData, 'modRpm', 'timestamp',
+        13500); //the data, the data key, timestamp key, plausability tolerence value
+    List<FlSpot> gpsSpots = _convertToSpots(gpsData, 'speed', 'timestamp', 1000);
 
     return SingleChildScrollView(
       child: Padding(
@@ -174,8 +170,8 @@ class EngineDataGraph extends ConsumerWidget {
                                 // Update cursor position based on the touch event
                               },
                             ),
-                            // minY: 0,
-                            // maxY: 50,
+                              // minY:700,
+                               maxY: 16000,
 
                             titlesData: const FlTitlesData(
                               //-------------------------------------------------------------------------------------
@@ -218,6 +214,9 @@ class EngineDataGraph extends ConsumerWidget {
                   ),
                 ),
                 //----------------------------------------------------------------------------------------------------------
+
+
+
 const SizedBox(height: 10,),
                 Center(
                   child: AspectRatio(
@@ -228,7 +227,7 @@ const SizedBox(height: 10,),
                         LineChartData(
                             lineBarsData: [
                               LineChartBarData(
-                            //    spots: gpsSpots,
+                                spots: gpsSpots,
                                 color: Colors.green,
                                 barWidth: 1,
                                 dotData: FlDotData(

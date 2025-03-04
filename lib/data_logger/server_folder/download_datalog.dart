@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert'; // <-- Import this for utf8.encode
+import 'dart:typed_data'; // <-- Import this for Uint8List
 import 'package:ble1/data_logger/log_viewer/log_viewer_frame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -10,12 +11,15 @@ import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/filename_provider.dart';
 
 class FileReceiver {
-  List<int> fileData = [];
+  final List<int> _buffer = [];
 
-  // Append a chunk of data to fileData
+  // Append a chunk of data
   void addData(List<int> chunk) {
-    fileData.addAll(chunk);
+    _buffer.addAll(chunk);
   }
+
+  // Expose the complete data as a typed list
+  Uint8List get fileData => Uint8List.fromList(_buffer);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -86,25 +90,34 @@ class _DownloadDataLogState extends ConsumerState<DownloadDataLog> {
                 .length; // Each time receive data, add the length to bytesReceived
           });
 
-          // Clean the received data to remove null characters and extra spaces
-          String receivedData =
-              utf8.decode(value).replaceAll('\u0000', '').trim();
-          print("Received cleaned data chunk: '$receivedData'");
+
+          // Store the raw bytes in fileReceiver
+          fileReceiver.addData(value);
+
+          // String debugHex =
+          //     value.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
+          // print("Received raw bytes (hex): $debugHex");
 
           if (!isTransferStarted) {
             isTransferStarted = true;
             print("Large file transfer started");
           }
 
-          // If the transfer is complete, stop
-          if (receivedData == "END") {
+// Then do a quick text scan:
+          String asText = utf8.decode(value, allowMalformed: true);
+          if (asText.contains("END")) {
+            // end of file
             print("File transfer complete");
-            //   fileReceiver.processFileData();
 
-            ref.read(dataLogProvider.notifier).setDatalog(utf8.decode(
-                fileReceiver.fileData)); // pass the data to the provider
-            ref.read(filenameProvider.notifier).setFileName(widget.fileName);// pass file name to the file name formatter(display in bottom of each log viewer screen)
-          
+
+
+            ref.read(dataLogProvider.notifier).setDatalog(
+                fileReceiver.fileData); // pass the data to the provider
+
+            ref.read(filenameProvider.notifier).setFileName(widget
+                .fileName); // pass file name to the file name formatter(display in bottom of each log viewer screen)
+
+
             setState(() {
               // fileContents = utf8.decode(fileReceiver.fileData);
               isLoading =
@@ -128,8 +141,8 @@ class _DownloadDataLogState extends ConsumerState<DownloadDataLog> {
           }
 
           // Add received data to fileReceiver
-          fileReceiver.addData(value);
-          print("Processed chunk of size: ${value.length}");
+          // fileReceiver.addData(value);
+           print("Processed chunk of size: ${value.length}");
 
           // After processing the chunk, send a request for the next chunk
           await _requestNextChunk(c);
@@ -162,7 +175,7 @@ class _DownloadDataLogState extends ConsumerState<DownloadDataLog> {
   }
 
   Future<void> _sendGetLargeFileRequest(BluetoothCharacteristic c) async {
-    const maxRetries = 3;
+    const maxRetries = 1;
     for (int i = 0; i < maxRetries; i++) {
       try {
         List<int> request = utf8.encode("GET_LARGE_FILE");

@@ -1,4 +1,3 @@
-import 'package:ble1/data_logger/log_viewer/logger_first_screen.dart';
 import 'package:ble1/data_logger/provider/max_value_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -7,20 +6,18 @@ import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/current_timestamp_provider.dart';
 import 'package:ble1/data_logger/provider/index_provider.dart';
 
-List<FlSpot> _convertToSpots(List<Map<String, dynamic>> dataLog,
+
+List<FlSpot> _convertToSpotsWithFilter(List<Map<String, dynamic>> dataLog,
     String dataName, String timestamp, double threshold) {
   List<FlSpot> points = [];
   String lastParsed = ''; // Store the last parsed values to prevent duplicates
   double lastValidPoint = 0; // To hold the last valid point(rpm value)
+  
 
-  // Iterate through the list and try to convert every two values
   for (int i = 0; i < dataLog.length; i++) {
-    // Ensure there are enough values
-    // if (i + 2 < dataLog.length) {
     String currentParsed =
         "${(dataLog[i][dataName])},${(dataLog[i][timestamp])},";
-    // print('current parsed $currentParsed');
-    //  print(dataLog[i][dataName]);
+    // //  print('currentParsed $currentParsed');
 
     // Check if any of the values are empty or invalid
     if (dataLog[i][dataName] == null || dataLog[i][timestamp] == null) {
@@ -28,41 +25,27 @@ List<FlSpot> _convertToSpots(List<Map<String, dynamic>> dataLog,
       continue; // Skip to the next iteration
     }
 
-    //   // Check if this set of values is the same as the last one
-    if (currentParsed != lastParsed) {
-      try {
-        // print("Parsing values: $currentParsed");
 
-        double data = (dataLog[i][dataName]);
-        int elapsedTime = (dataLog[i][timestamp]);
 
-        //   Plausabilty check, if the data is masively different to last data it can't be valid
-        //  Check if we have a last valid point to compare with
+    double data = (dataLog[i][dataName]);
+    int elapsedTime = (dataLog[i][timestamp]);
 
-        double difference = (data - lastValidPoint).abs();
 
-        // Set your threshold value
-        // double threshold =
-        //     17000; // make adjustable in the page settings one day?
-
-        // If the differences exceed the threshold, skip this point
-        if (difference > threshold) {
-          //   print("Skipping point due to threshold exceedance: $difference");
-          continue;
-        }
-
-        // If the point is valid and passes the threshold check, add it
-        points.add(FlSpot(elapsedTime.toDouble(), data));
-        lastValidPoint = data; // Update the last valid point
-        //    print('lastvalidPoint $lastValidPoint');
-        lastParsed = currentParsed; // Update the last parsed values
-      } catch (e) {
-        //    print(
-        //  "Error parsing data at index $i :  ${(dataLog[i]['lat'])},${(dataLog[i]['lng'])},${(dataLog[i]['speed'])},${(dataLog[i]['timestamp'])} ");
-      }
+if (points.isEmpty) {
+      lastValidPoint = data;
+      points.add(FlSpot(elapsedTime.toDouble(), data));
+      lastParsed = currentParsed;
     } else {
-//      print("Skipping duplicate data: $currentParsed");
+      double difference = (data - lastValidPoint).abs();
+      if (difference <= threshold) {
+        points.add(FlSpot(elapsedTime.toDouble(), data));
+        lastValidPoint = data;
+        lastParsed = currentParsed;
+      } else {
+        print("Skipping... $difference");
+      }
     }
+
   }
   return points;
 }
@@ -85,7 +68,7 @@ double roundUpToNext10(double number) {
   return (number / 10).ceil() * 10;
 }
 
-double roundUpToNext1000(double number) {
+double roundUpToNext1000(num number) {
   // used for rpm axis, rounds scale up to next 1000
   return (number / 1000).ceil() * 1000;
 }
@@ -103,23 +86,15 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
 
   @override
   Widget build(BuildContext context) {
-    final gpsData = ref.watch(dataLogProvider.notifier).gpsData;
-    final rpmData = ref.watch(dataLogProvider.notifier).rpmData;
+    final data = ref.watch(dataLogProvider.notifier).allData;
     final maxValues = ref.watch(maxValueProvider);
 
-   
-
     // Convert data to FlSpots
-    List<FlSpot> rpmSpots = _convertToSpots(rpmData, 'rpm', 'timestamp', 17000);
-    List<FlSpot> gpsSpots =
-        _convertToSpots(gpsData, 'speed', 'timestamp', 1000);
 
-    // Make sure the touchIndex is valid within the data bounds
-    // int minLength =
-    //     rpmSpots.length < gpsSpots.length ? rpmSpots.length : gpsSpots.length;
-    // if (touchIndex >= minLength) {
-    //   touchIndex = minLength - 1;
-    // }
+    List<FlSpot> rpmSpots = _convertToSpotsWithFilter(data, 'modRpm', 'timestamp',1000); //dataName, timestamp, threshold, if for example the rpm is 1000 and the next is 10000, it will be skipped
+
+    List<FlSpot> gpsSpots = _convertToSpotsWithFilter(data, 'speed', 'timestamp',10); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    //  print('rpmSpots $rpmSpots');
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -143,8 +118,10 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                     dotData: const FlDotData(show: false),
                   ),
                 ],
+                minY: 0,
                 maxY: roundUpToNext1000(maxValues
                     .maxRpm), // function to round up the axis to the next 10
+
                 lineTouchData: LineTouchData(
                   // touchSpotThreshold: 1,
                   handleBuiltInTouches: false,
@@ -182,8 +159,8 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
 
                         ref.read(indexProvider.notifier).setIndex(touchIndex);
 
-                        print('Top touch: ${touchResponse.lineBarSpots![0].x}');
-                        print('Top $touchIndex');
+                        //    print('Top touch: ${touchResponse.lineBarSpots![0].x}');
+                        //     print('Top $touchIndex');
                       }
                     });
                   },
@@ -217,6 +194,7 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
           const SizedBox(
             height: 20,
           ),
+
           // Second LineChart (Speed Data)-------------------------------------------------------------------------------
           Expanded(
             child: LineChart(
@@ -268,8 +246,8 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
 
                         ref.read(indexProvider.notifier).setIndex(touchIndex);
 
-                        print('touch: ${touchResponse.lineBarSpots![0].x}');
-                        print('bottom: $touchIndex');
+                        // print('touch: ${touchResponse.lineBarSpots![0].x}');
+                        //  print('bottom: $touchIndex');
                       }
                     });
                   },

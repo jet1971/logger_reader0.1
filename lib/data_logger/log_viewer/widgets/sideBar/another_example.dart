@@ -2,6 +2,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+
 class LineChartSample2 extends StatefulWidget {
   const LineChartSample2({super.key});
 

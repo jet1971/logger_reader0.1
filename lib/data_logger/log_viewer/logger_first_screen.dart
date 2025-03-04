@@ -71,7 +71,7 @@ class LoggerFirstScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gpsData = ref.watch(dataLogProvider.notifier).gpsData;
+    final gpsData = ref.watch(dataLogProvider.notifier).allData;
 
     final parsedFilename = ref.watch(
         filenameProvider); // This will give the formatted filename or null
@@ -170,7 +170,8 @@ class GPSMapState extends ConsumerState<GPSMap> {
       child: Shortcuts(
         shortcuts: {
           LogicalKeySet(LogicalKeyboardKey.arrowLeft): const LeftArrowIntent(),
-          LogicalKeySet(LogicalKeyboardKey.arrowRight): const RightArrowIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight):
+              const RightArrowIntent(),
         },
         child: Actions(
           actions: {
@@ -262,20 +263,22 @@ class GPSMapState extends ConsumerState<GPSMap> {
                                     ),
                                   ],
                                 )),
-                                  Positioned(
+                            Positioned(
                                 right: 20,
                                 bottom: 20,
                                 child: Column(
                                   children: [
-                                    constraints.maxWidth > 200 ?
-                                    Text(
-                                     curserModifierSet
-                                          ? // display venu
-                                          'Fast curser mode on, press spacebar to reset'
-                                          : '',
-                                      style: const TextStyle(
-                                          color: Colors.white, fontSize: 16),
-                                    ): const Text('')
+                                    constraints.maxWidth > 200
+                                        ? Text(
+                                            curserModifierSet
+                                                ? // display venu
+                                                'Fast curser mode on, press spacebar to reset'
+                                                : '',
+                                            style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16),
+                                          )
+                                        : const Text('')
                                   ],
                                 )),
                           ],
@@ -397,14 +400,14 @@ class GPSMapState extends ConsumerState<GPSMap> {
     final maxSpeed =
         gpsPoints.map((p) => p['speed']).reduce((a, b) => a > b ? a : b);
 
-    final rpmData = ref.watch(dataLogProvider.notifier).rpmData;
+    final rpmData = ref.watch(dataLogProvider.notifier).allData;
     final maxRpm = rpmData.map((p) => p['rpm']).reduce((a, b) => a > b ? a : b);
 
     // Set the initial tap position and info
     setState(() {
-      ref.read(currentTimeStampProvider.notifier).setScreenPositionTimeStamp(
-          gpsPoints[markerIndex][
-              'timestamp']); // get the timstamp of the current screen position and set in the provider
+      // ref.read(currentTimeStampProvider.notifier).setScreenPositionTimeStamp(
+      //     gpsPoints[markerIndex][
+      //         'timestamp']); // get the timstamp of the current screen position and set in the provider
       ref.read(maxValueProvider.notifier).setMaxSpeedValue(
           maxSpeed); // set max speed in a provider, use in other screens, eg scale axis in graphs, set curser positions?
 
@@ -465,8 +468,8 @@ class GPSMapPainter extends CustomPainter {
 
     // for (var point in points) {
     //   canvas.drawCircle(point, 3, Paint()..color = Colors.black);
-    //  print(point);
-
+    //   print(point);
+    // }
     canvas.drawCircle(
         points[markerIndex],
         8,
