@@ -1,11 +1,13 @@
 import 'dart:typed_data';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 import 'package:ble1/data_logger/models/server_file_details.dart';
 import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/local_file_list_provider.dart';
-import 'package:ble1/data_logger/log_viewer/logger_first_screen.dart';
+import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/logger_first_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ble1/data_logger/log_viewer/log_viewer_frame.dart';
 import 'package:ble1/data_logger/provider/filename_provider.dart';
@@ -44,16 +46,51 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
     });
   }
 
-  Future loadData(String fileName, WidgetRef ref) async {
-    fileContents = Uint8List.fromList((await readFromFile('/$fileName')).codeUnits);
-    print("Loaded data: $fileContents");
-    // Update the provider with the new file list
-    //
-    ref.read(dataLogProvider.notifier).setDatalog(fileContents);
+  Future<void> loadData(String fileName, WidgetRef ref) async {
+    try {
+      // Get the full file path
+      final directory = await getApplicationDocumentsDirectory();
+      final fullPath = '${directory.path}/$fileName';
+
+      // Read the file as bytes
+      fileContents = await File(fullPath).readAsBytes();
+
+      // Update the provider with the new data
+      ref.read(dataLogProvider.notifier).setDatalog(fileContents);
+      ref.read(filenameProvider.notifier).setFileName(fileName);
+
+      print("Loaded data: $fileContents");
+    } catch (e) {
+      print("Error loading file: $e");
+    }
   }
+
+  //-----------------------------------------------------------------------------------------------------
+
+  String formatMilliseconds(int milliseconds) {
+    // Calculate minutes, seconds, and remaining milliseconds
+    int minutes = (milliseconds ~/ 60000); // 1 minute = 60000 ms
+    int seconds = ((milliseconds % 60000) ~/ 1000);
+    int remainingMilliseconds = (milliseconds % 1000);
+
+    // Format the time as 'minutes:seconds.milliseconds'
+    String formattedTime =
+        '$minutes:${seconds.toString().padLeft(2, '0')}.${remainingMilliseconds.toString().padLeft(3, '0')}';
+
+    return formattedTime;
+  }
+
+//-----------------------------------------------------------------------------------------------------
+ String formatTime(String time) {
+    String hour = time.substring(0, 2); // First 2 characters are the hour
+    String mins = time.substring(2, 4); // Characters 2-4 are the minutes
+    return '$hour:$mins';
+  }
+//-----------------------------------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
+
     var screenSize = MediaQuery.of(context).size;
 
     final providerLocalFileList = ref.watch(localFileListProvider);
@@ -259,10 +296,20 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
             const SizedBox(
               width: 15,
             ),
+                SizedBox(
+              width: 70,
+              child: Text(
+                widget.serverInfo.id,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+            ),
             SizedBox(
               width: 70,
               child: Text(
-                widget.serverInfo.time,
+                formatTime(widget.serverInfo.time),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
@@ -276,9 +323,10 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
             SizedBox(
               width: 120,
               child: Text(
-                widget.serverInfo.fastestLap,
+                formatMilliseconds(int.tryParse(widget.serverInfo.fastestLap) ?? 0),
+               
                 style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
+                    color: Colors.white, fontWeight: FontWeight.normal),
               ),
             ),
             const SizedBox(
@@ -306,18 +354,19 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
               onPressed: () async {
                 if (saved) {
                   // Load data before navigation
-                  ref.read(filenameProvider.notifier).setFileName(widget.serverInfo.fileName); // pass file name to the file name formatter(display in bottom of each log viewer screen
+                  ref
+                      .read(filenameProvider.notifier)
+                      .setFileName(widget.serverInfo.fileName);
                   await loadData(widget.serverInfo.fileName, ref);
+
                   if (!context.mounted) return;
+
                   // Perform navigation after loading data
                   Navigator.of(context)
                       .push(
                     MaterialPageRoute(
                       builder: (context) => LogViewerFrame(
-                        fileName: widget.serverInfo.fileName, // pass file name
-                        //   loadLocalData: true,
-                        //  datalog: ref.read(
-                        //      localDataLogProvider), // the locally stored data
+                        fileName: widget.serverInfo.fileName,
                       ),
                     ),
                   )
@@ -327,7 +376,7 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
                   });
                 } else {
                   // Handle downloading the file
-                  widget.downloadFileFunction(); // filemanagement.dart
+                  widget.downloadFileFunction();
                 }
               },
             ),

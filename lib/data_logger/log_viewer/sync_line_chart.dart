@@ -6,13 +6,11 @@ import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/current_timestamp_provider.dart';
 import 'package:ble1/data_logger/provider/index_provider.dart';
 
-
 List<FlSpot> _convertToSpotsWithFilter(List<Map<String, dynamic>> dataLog,
     String dataName, String timestamp, double threshold) {
   List<FlSpot> points = [];
   String lastParsed = ''; // Store the last parsed values to prevent duplicates
   double lastValidPoint = 0; // To hold the last valid point(rpm value)
-  
 
   for (int i = 0; i < dataLog.length; i++) {
     String currentParsed =
@@ -25,13 +23,10 @@ List<FlSpot> _convertToSpotsWithFilter(List<Map<String, dynamic>> dataLog,
       continue; // Skip to the next iteration
     }
 
-
-
     double data = (dataLog[i][dataName]);
     int elapsedTime = (dataLog[i][timestamp]);
 
-
-if (points.isEmpty) {
+    if (points.isEmpty) {
       lastValidPoint = data;
       points.add(FlSpot(elapsedTime.toDouble(), data));
       lastParsed = currentParsed;
@@ -42,10 +37,12 @@ if (points.isEmpty) {
         lastValidPoint = data;
         lastParsed = currentParsed;
       } else {
+        data = lastValidPoint;
+        points.add(FlSpot(elapsedTime.toDouble(), data));
         print("Skipping... $difference");
+        print("last valid data was added as filler so chart aligns");
       }
     }
-
   }
   return points;
 }
@@ -70,6 +67,7 @@ double roundUpToNext10(double number) {
 
 double roundUpToNext1000(num number) {
   // used for rpm axis, rounds scale up to next 1000
+ // return (number).ceil() * 1000;
   return (number / 1000).ceil() * 1000;
 }
 
@@ -86,14 +84,38 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
 
   @override
   Widget build(BuildContext context) {
-    final data = ref.watch(dataLogProvider.notifier).allData;
+   // final data = ref.watch(dataLogProvider.notifier).allData;
     final maxValues = ref.watch(maxValueProvider);
+    print(maxValues.maxSpeed);
+    print(maxValues.maxRpm);
+
+        final fastestLap = ref.watch(dataLogProvider.notifier).getFastestLap();
+    // final fastestLapData = ref.watch(dataLogProvider.notifier).getLap(fastestLap);
+   // final data = ref.watch(dataLogProvider.notifier).getLap(2);
+
+      // Watch selected lap number (triggers rebuilds)
+    final selectedLap = ref.watch(selectedLapProvider);
+
+// Watch raw data log state to trigger updates on data changes
+ //   final rawData = ref.watch(dataLogProvider);
+
+// Call method to extract the selected lap (does NOT trigger rebuilds on its own)
+    final lapData = ref.read(dataLogProvider.notifier).getLap(selectedLap);
+
 
     // Convert data to FlSpots
 
-    List<FlSpot> rpmSpots = _convertToSpotsWithFilter(data, 'modRpm', 'timestamp',1000); //dataName, timestamp, threshold, if for example the rpm is 1000 and the next is 10000, it will be skipped
+    List<FlSpot> rpmSpots = _convertToSpotsWithFilter(
+        lapData,
+        'rpm',
+        'timestamp',
+       40500); //dataName, timestamp, threshold, if for example the rpm is 1000 and the next is 10000, it will be skipped
 
-    List<FlSpot> gpsSpots = _convertToSpotsWithFilter(data, 'speed', 'timestamp',10); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    List<FlSpot> gpsSpots = _convertToSpotsWithFilter(
+        lapData,
+        'speed',
+        'timestamp',
+        20); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
     //  print('rpmSpots $rpmSpots');
 
     return Padding(
@@ -118,9 +140,9 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                     dotData: const FlDotData(show: false),
                   ),
                 ],
-                minY: 0,
-                maxY: roundUpToNext1000(maxValues
-                    .maxRpm), // function to round up the axis to the next 10
+                 minY: 0,
+           //     maxY: roundUpToNext1000(maxValues.maxRpm), // function to round up the axis to the next 10
+                maxY: 10000,
 
                 lineTouchData: LineTouchData(
                   // touchSpotThreshold: 1,

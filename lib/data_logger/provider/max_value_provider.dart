@@ -27,6 +27,7 @@ class MaxValueProvider extends StateNotifier<MaxValues> {
   // Update the maxRpm
   void setMaxRpmValue(int value) {
     state = state.copyWith(maxRpm: value);
+    print(value);
   }
 }
 

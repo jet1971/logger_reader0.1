@@ -1,14 +1,12 @@
 // ignore_for_file: avoid_print
-import 'dart:io';
+import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/g_p_s_map_painter.dart';
 import 'package:ble1/data_logger/provider/max_value_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/current_timestamp_provider.dart';
-import 'package:ble1/data_logger/provider/local_file_list_provider.dart';
 import 'package:zoom_widget/zoom_widget.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:ble1/data_logger/provider/filename_provider.dart';
 import 'package:ble1/data_logger/provider/index_provider.dart';
 
@@ -23,65 +21,29 @@ class LeftArrowIntent extends Intent {
 bool curserModifierSet = true;
 int markerIndex = 0;
 
-Future<String> getFilePath(String fileName) async {
-  // Get the application's document directory
-  Directory directory = await getApplicationDocumentsDirectory();
-  return '${directory.path}$fileName';
-}
-
-Future<void> writeToFile(String data, String fileName) async {
-  final path = await getFilePath(fileName);
-  print(path);
-  final file = File(path);
-
-  // Write the data to the file
-  await file.writeAsString(data);
-  // print("Data written to file: $data");
-}
-
-Future<String> readFromFile(fileName) async {
-  try {
-    final path = await getFilePath(fileName);
-    final file = File(path);
-
-    // Read the file
-    String contents = await file.readAsString();
-    return contents;
-  } catch (e) {
-    print("Error reading file: $e");
-    return 'Error reading file';
-  }
-}
-
-void saveData(String data, String fileName, WidgetRef ref) async {
-  await writeToFile(data, fileName);
-  print('Save, Data name: $fileName');
-
-  // Trigger the provider to update after saving
-  ref.read(localFileListProvider.notifier).loadLocalFileList();
-}
-
 class LoggerFirstScreen extends ConsumerWidget {
   const LoggerFirstScreen({
     super.key,
-    required this.fileName,
+   // required this.fileName,
   });
 
-  final String fileName;
+  //final String fileName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gpsData = ref.watch(dataLogProvider.notifier).allData;
 
+    final selectedLap = ref.watch(selectedLapProvider);
+    final rawData = ref.watch(dataLogProvider);
+    //final lapData = ref.watch(dataLogProvider.notifier).getLap(selectedLap);
+ 
     final parsedFilename = ref.watch(
         filenameProvider); // This will give the formatted filename or null
-    //markerIndex = ref.watch(indexProvider);
-
-    markerIndex = ref.watch(indexProvider);
+   
+    markerIndex = ref.watch(indexProvider); //markerIndex = ref.watch(indexProvider);
 
     return Scaffold(
       body: GPSMap(
-        dataLog: gpsData,
+      //  dataLog: lapData,
         parsedFilename: parsedFilename!,
       ),
     );
@@ -90,8 +52,11 @@ class LoggerFirstScreen extends ConsumerWidget {
 
 class GPSMap extends ConsumerStatefulWidget {
   const GPSMap(
-      {required this.dataLog, required this.parsedFilename, super.key});
-  final List<Map<String, dynamic>> dataLog;
+      {required this.parsedFilename,
+      super.key
+      });
+
+  //final List<Map<String, dynamic>> dataLog;
   //final List<GPSPoint> dataLog;
   final String parsedFilename;
 
@@ -101,7 +66,19 @@ class GPSMap extends ConsumerStatefulWidget {
 
 class GPSMapState extends ConsumerState<GPSMap> {
   // late final List<GPSPoint> gpsPoints;
-  late final List<Map<String, dynamic>> gpsPoints;
+  late  List<Map<String, dynamic>> gpsPoints;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final selectedLap = ref.watch(selectedLapProvider);
+    gpsPoints = ref.read(dataLogProvider.notifier).getLap(selectedLap);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setInitialTapPosition();
+    });
+  }
+
   Offset? tappedPosition;
   String? tappedInfo;
   final FocusNode focusNode =
@@ -117,9 +94,6 @@ class GPSMapState extends ConsumerState<GPSMap> {
       DeviceOrientation.landscapeLeft,
     ]);
 
-    gpsPoints = widget.dataLog;
-
-    //   gpsPoints = _convertToGPSPoints(widget.dataLog);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _setInitialTapPosition();
     });
@@ -135,15 +109,15 @@ class GPSMapState extends ConsumerState<GPSMap> {
 
   @override
   Widget build(BuildContext context) {
-    // final double minLat =
-    //     gpsPoints.map((p) => p.latitude).reduce((a, b) => a < b ? a : b); // Find the minimum latitude
-    // final double maxLat =
-    //     gpsPoints.map((p) => p.latitude).reduce((a, b) => a > b ? a : b);
-    // final double minLon =
-    //     gpsPoints.map((p) => p.longitude).reduce((a, b) => a < b ? a : b);
-    // final double maxLon =
-    //     gpsPoints.map((p) => p.longitude).reduce((a, b) => a > b ? a : b);
 
+    final selectedLap = ref.watch(selectedLapProvider);
+    gpsPoints = ref.watch(dataLogProvider.notifier).getLap(selectedLap);
+
+    if (gpsPoints.isEmpty) {
+      return const Center(child: Text('No data for this lap'));
+    }
+
+    
     final double minLat = gpsPoints
         .map((p) => p['latitude'])
         .reduce((a, b) => a < b ? a : b); // Find the minimum latitude
@@ -397,11 +371,10 @@ class GPSMapState extends ConsumerState<GPSMap> {
             .reduce((a, b) => a.value['speed'] > b.value['speed'] ? a : b)
             .key;
 
-    final maxSpeed =
-        gpsPoints.map((p) => p['speed']).reduce((a, b) => a > b ? a : b);
+    final maxSpeed = gpsPoints.map((p) => p['speed']).reduce((a, b) => a > b ? a : b);
 
-    final rpmData = ref.watch(dataLogProvider.notifier).allData;
-    final maxRpm = rpmData.map((p) => p['rpm']).reduce((a, b) => a > b ? a : b);
+    //final rpmData = ref.watch(dataLogProvider.notifier).allData;
+    final maxRpm = gpsPoints.map((p) => p['rpm']).reduce((a, b) => a > b ? a : b);
 
     // Set the initial tap position and info
     setState(() {
@@ -414,78 +387,5 @@ class GPSMapState extends ConsumerState<GPSMap> {
       ref.read(maxValueProvider.notifier).setMaxRpmValue(
           maxRpm); // set max rpm in a provider, use in other screens,eg scale axis in graphs
     });
-  }
-}
-
-class GPSMapPainter extends CustomPainter {
-  GPSMapPainter(this.points, this.gpsPoints);
-
-  final List<Offset> points;
-  //final List<GPSPoint> gpsPoints;
-  final List<Map<String, dynamic>> gpsPoints;
-  final double highSpeedThreshold = 41.0;
-  final double mediumSpeedThreshold = 25.0;
-
-  @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
-    if (points.isEmpty) return;
-
-    final paintLowSpeed = Paint()
-      ..color = Colors.green
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final paintMediumSpeed = Paint()
-      ..color = const Color.fromARGB(255, 242, 154, 47)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final paintHighSpeed = Paint()
-      ..color = Colors.red
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final path = Path();
-    path.moveTo(points[0].dx, points[0].dy);
-
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
-
-      if (gpsPoints[i]['speed'] > highSpeedThreshold) {
-        canvas.drawPath(path, paintHighSpeed);
-      } else if (gpsPoints[i]['speed'] > mediumSpeedThreshold) {
-        canvas.drawPath(path, paintMediumSpeed);
-      } else {
-        canvas.drawPath(path, paintLowSpeed);
-      }
-
-      path.reset();
-      path.moveTo(points[i].dx, points[i].dy);
-    }
-
-    // for (var point in points) {
-    //   canvas.drawCircle(point, 3, Paint()..color = Colors.black);
-    //   print(point);
-    // }
-    canvas.drawCircle(
-        points[markerIndex],
-        8,
-        Paint()
-          ..color = const Color.fromARGB(
-              255, 244, 11, 11)); // adds the red marker to plot
-  }
-  // }
-
-  //   for (var i = 0; i < points.length; i++) {
-  //     canvas.drawCircle(points[i], 3, Paint()..color = Colors.black);
-  //   }
-  // }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
   }
 }

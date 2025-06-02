@@ -16,24 +16,23 @@ class FileListNotifier extends StateNotifier<List<ServerFileDetails>> {
   }
 
   DateTime _parseDateFromFilename(ServerFileDetails fileName) {
-    // Assuming filename is in the format "yyyyMMdd:HHmmss.txt" its not its a ServerFileDetails object so do some stuff below
     try {
+      // Combine year, month, and day to form the date part
       String datePart = fileName.year + fileName.month + fileName.day;
 
+      // Extract the time part (hour and minutes)
       String time = fileName.time;
 
-      int colonPos = time.indexOf(':');
+      // `time` is in the format "HHmm"
+      String hour = time.substring(0, 2); // First 2 characters are the hour
+      String mins = time.substring(2, 4); // Characters 2-4 are the minutes
+      //String secs = time.substring(6, 8); // Characters 6-7 are the seconds
 
-      String hour = time.substring(colonPos - 2, colonPos + 0);
-
-      String mins = time.substring(colonPos + 1, colonPos + 3);
-
-      String timePart = hour + mins;
-
-      return DateTime.parse("$datePart $timePart");
+      // Combine date and time into a full DateTime string
+      return DateTime.parse("$datePart $hour$mins");
     } catch (e) {
-      return DateTime
-          .now(); // In case of invalid filename, use the current date
+      // In case of invalid filename, return the current date and time
+      return DateTime.now();
     }
   }
 

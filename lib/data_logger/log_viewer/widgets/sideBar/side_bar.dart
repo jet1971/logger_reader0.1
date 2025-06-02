@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/local_file_list_provider.dart';
 import 'package:path/path.dart' as path;
-import 'package:ble1/data_logger/log_viewer/logger_first_screen.dart';
+import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/logger_first_screen.dart';
 
 class SideBar extends ConsumerStatefulWidget {
   const SideBar({
@@ -21,14 +21,14 @@ class SideBar extends ConsumerStatefulWidget {
 }
 
 class _SideMenuState extends ConsumerState<SideBar> {
-  bool saved = false;
+  bool isSaved = false;
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
       final providerLocalFileList = ref.watch(localFileListProvider);
-      saved = providerLocalFileList
+      isSaved = providerLocalFileList
           .map((filePath) => path.basename(filePath))
           .contains(widget.fileName);
     });
@@ -38,7 +38,7 @@ class _SideMenuState extends ConsumerState<SideBar> {
   Widget build(BuildContext context) {
     final providerLocalFileList = ref.watch(localFileListProvider);
     // Update the `saved` status based on the current provider state
-    saved = providerLocalFileList
+    isSaved = providerLocalFileList
         .map((filePath) => path.basename(filePath))
         .contains(widget.fileName);
 
@@ -67,12 +67,12 @@ class _SideMenuState extends ConsumerState<SideBar> {
                             size: 32,
                           )),
                       IconButton(
-                        onPressed: saved
+                        onPressed: isSaved
                             ? null
                             : () {
-                                ref
-                                    .read(dataLogProvider.notifier)
-                                    .saveData(widget.fileName, ref);
+                                ref                                     // save to local storage
+                                    .read(dataLogProvider.notifier) // dataLogProvider is the provider
+                                    .saveData(widget.fileName, ref); // ref is the widget reference
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
@@ -90,7 +90,7 @@ class _SideMenuState extends ConsumerState<SideBar> {
                               },
                         icon: Icon(
                           Icons.save_as_outlined,
-                          color: saved
+                          color: isSaved
                               ? const Color.fromARGB(121, 158, 158, 158)
                               : const Color.fromARGB(255, 5, 168, 90),
                           size: 30,
@@ -98,7 +98,7 @@ class _SideMenuState extends ConsumerState<SideBar> {
                       ),
                       IconButton(
                         // delete icon
-                        onPressed: saved
+                        onPressed: isSaved
                             ? () {
                                 ref
                                     .read(dataLogProvider
@@ -110,7 +110,7 @@ class _SideMenuState extends ConsumerState<SideBar> {
 
                         icon: Icon(
                           Icons.delete_forever_outlined,
-                          color: saved
+                          color: isSaved
                               ? Colors.red
                               : const Color.fromARGB(121, 158, 158, 158),
                           size: 30,
@@ -135,14 +135,14 @@ class _SideMenuState extends ConsumerState<SideBar> {
                 ),
                 Container(
                   width: 220,
-                  height: 280,
+                  height: 200,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: const Color(0xFF21222D),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: LoggerFirstScreen(fileName: widget.fileName,),
+                  child: const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: LoggerFirstScreen(),
                   ),
                 ),
                 const SizedBox(

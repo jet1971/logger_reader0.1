@@ -1,6 +1,6 @@
 import 'package:ble1/data_logger/log_viewer/engine_data_graph.dart';
 import 'package:ble1/data_logger/log_viewer/example_graph.dart';
-import 'package:ble1/data_logger/log_viewer/logger_first_screen.dart';
+import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/logger_first_screen.dart';
 import 'package:ble1/data_logger/log_viewer/sync_line_chart.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/debug.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/sideBar/another_example.dart';
@@ -25,18 +25,16 @@ class LogViewerFrame extends ConsumerWidget {
 
     Widget mainContent;
     if (chosenContent == 'track_report') {
-      mainContent = LoggerFirstScreen(fileName: fileName);
+      mainContent = const LoggerFirstScreen();
     } else if (chosenContent == 'engine_data') {
       mainContent = const EngineDataGraph();
     } else if (chosenContent == 'suspension_data') {
-      mainContent =  DebugWidget();
+      mainContent =  const DebugWidget();
     } else if (chosenContent == 'section_times') {
       mainContent =  const SyncedLineChart();
     } 
     else {
-      mainContent = LoggerFirstScreen(
-        fileName: fileName,
-      );
+      mainContent = const LoggerFirstScreen();
     }
 
     return Scaffold(

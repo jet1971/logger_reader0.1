@@ -50,19 +50,20 @@ class LocalFileListNotifier extends StateNotifier<List<String>> {
   DateTime _parseDateFromFilename(String fileName) {
     // Assuming filename is in the format "yyyyMMdd:HHmmss.txt" its not its this //wo0212202418:27.txt so parsed first
     try {
-      int colonPos = fileName.indexOf(':');
+      int txtPos = fileName.indexOf('.txt');
 
       String year =
-          fileName.substring(colonPos - 6, colonPos - 2); // Extract year (2024)
+          fileName.substring(txtPos - 4, txtPos); // Extract year (2024)
       String month =
-          fileName.substring(colonPos - 8, colonPos - 6); // Extract month (10)
+          fileName.substring(txtPos - 6, txtPos - 4); // Extract month (10)
       String day =
-          fileName.substring(colonPos - 10, colonPos - 8); // Extract day
+          fileName.substring(txtPos - 8, txtPos - 6); // Extract day
 
       String datePart = year + month + day;
-      String hour = fileName.substring(colonPos - 2, colonPos + 0);
-      String mins = fileName.substring(colonPos + 1, colonPos + 3);
+      String hour = fileName.substring(txtPos - 12, txtPos - 10);
+      String mins = fileName.substring(txtPos - 10, txtPos - 8);
       String timePart = hour + mins;
+
 
       return DateTime.parse("$datePart $timePart");
     } catch (e) {

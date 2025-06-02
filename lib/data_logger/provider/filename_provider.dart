@@ -19,25 +19,36 @@ class FilenameProvider extends StateNotifier<String?> {
   // Method to parse the filename and store results
   void parseFilename(String fileName) {
     // Find positions based on expected format
-    int colonPos =
-        fileName.indexOf(':'); // Locate the time part by finding the colon
+
+    // int colonPos =
+    //     fileName.indexOf(':'); // Locate the time part by finding the colon
+
+    int txtPos =
+        fileName.indexOf('.txt'); // Locate the end of the filename by finding '.txt'
 
     String venue = fileName.substring(
-        colonPos - 12, colonPos - 10); // Extract venue initials
+        txtPos - 26, txtPos - 25); // Extract venue initials
     String year =
-        fileName.substring(colonPos - 6, colonPos - 2); // Extract year (2024)
+        fileName.substring(txtPos - 4, txtPos); // Extract year (2024)
     String month =
-        fileName.substring(colonPos - 8, colonPos - 6); // Extract month (10)
-    String day = fileName.substring(colonPos - 10, colonPos - 8); // Extract day
+        fileName.substring(txtPos - 6, txtPos - 4); // Extract month (10)
+    String day = fileName.substring(txtPos - 6, txtPos - 4); // Extract day
     String time =
-        fileName.substring(colonPos - 2, colonPos + 3); // Extract time
+        fileName.substring(txtPos - 12, txtPos - 8); // Extract time
 
-    // Handle special cases for venue
-    if (venue == 'ho') {
-      venue = 'Home';
-    } else if (venue == 'wo') {
+    // // Handle special cases for venue
+    // if (venue == 'ho') {
+    //   venue = 'Home';
+    // } else if (venue == '1') {
+    //   venue = 'Work';
+    // } else if (venue == '0') {
+    //   venue = 'Venue N/A';
+    // }
+      if (venue == "1") {
       venue = 'Work';
-    } else if (venue == 'na') {
+    } else if (venue == "2") {
+      venue = 'Home';
+    } else if (venue == "0") {
       venue = 'Venue N/A';
     }
 

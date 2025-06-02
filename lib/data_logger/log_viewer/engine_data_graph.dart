@@ -10,13 +10,13 @@ List<FlSpot> _convertToSpots(List<Map<String, dynamic>> dataLog,
   String lastParsed = ''; // Store the last parsed values to prevent duplicates
   double lastValidPoint = 0; // To hold the last valid point(rpm value)
 
-  // Iterate through the list and try to convert every three values into a GPSPoint
+  // Iterate through the list and try to convert every three values ?
   for (int i = 0; i < dataLog.length; i++) {
  
     String currentParsed =
         "${(dataLog[i][dataName])},${(dataLog[i][timestamp])},";
     // print('current parsed $currentParsed');
-    print(dataLog[i][dataName]);
+  //  print(dataLog[i][dataName]);
 
     // Check if any of the values are empty or invalid
     if (dataLog[i][dataName] == null || dataLog[i][timestamp] == null) {
@@ -47,7 +47,7 @@ List<FlSpot> _convertToSpots(List<Map<String, dynamic>> dataLog,
         // If the point is valid and passes the threshold check, add it
         points.add(FlSpot(elapsedTime.toDouble(), data));
         lastValidPoint = data; // Update the last valid point
-            print('lastvalidPoint $lastValidPoint');
+          //  print('lastvalidPoint $lastValidPoint');
         lastParsed = currentParsed; // Update the last parsed values
       } catch (e) {
         print(
@@ -106,15 +106,32 @@ class EngineDataGraph extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gpsData = ref.watch(dataLogProvider.notifier).allData;
-    final rpmData = ref.watch(dataLogProvider.notifier).allData;
+   // final data = ref.watch(dataLogProvider.notifier).allData;
+  //   final data = ref.watch(dataLogProvider.notifier).getLap(2);
+
+      //       final fastestLap = ref.watch(dataLogProvider.notifier).getFastestLap();
+    // final fastestLapData = ref.watch(dataLogProvider.notifier).getLap(fastestLap);
+    // final data = ref.watch(dataLogProvider.notifier).getLap(2);
+
+    // Watch selected lap number (triggers rebuilds)
+    final selectedLap = ref.watch(selectedLapProvider);
+
+// Watch raw data log state to trigger updates on data changes
+    //   final rawData = ref.watch(dataLogProvider);
+
+// Call method to extract the selected lap (does NOT trigger rebuilds on its own)
+    final lapData = ref.read(dataLogProvider.notifier).getLap(selectedLap);
+   
 
     final parsedFilename = ref.watch(
         filenameProvider); // This will give the formatted filename or null
+       
 
-    List<FlSpot> rpmSpots = _convertToSpots(rpmData, 'modRpm', 'timestamp',
-        13500); //the data, the data key, timestamp key, plausability tolerence value
-    List<FlSpot> gpsSpots = _convertToSpots(gpsData, 'speed', 'timestamp', 1000);
+    List<FlSpot> rpmSpots = _convertToSpots(lapData, 'rpm', 'timestamp', 113500); //the data, the data key, timestamp key, plausability tolerence value
+    List<FlSpot> speedSpots = _convertToSpots(lapData, 'speed', 'timestamp', 25);
+    List<FlSpot> batteryVoltageSpots = _convertToSpots(lapData, 'batteryVoltage', 'timestamp', 100);
+    List<FlSpot> afrSpots = _convertToSpots(lapData, 'afr', 'timestamp', 60);
+    List<FlSpot> tpsSpots = _convertToSpots(lapData, 'tps', 'timestamp', 100);
 
     return SingleChildScrollView(
       child: Padding(
@@ -127,7 +144,7 @@ class EngineDataGraph extends ConsumerWidget {
               children: [
                 Center(
                   child: AspectRatio(
-                    aspectRatio: 4,
+                    aspectRatio: 6,
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(2, 2, 10, 0),
                       child: LineChart(
@@ -185,7 +202,7 @@ class EngineDataGraph extends ConsumerWidget {
                               leftTitles: AxisTitles(
                                 axisNameWidget: Text(
                                   'RPM',
-                                  style: TextStyle(color: Colors.white),
+                                  style: TextStyle(color: Colors.blue),
                                 ),
                                 axisNameSize: 50,
                                 drawBelowEverything: false,
@@ -220,14 +237,14 @@ class EngineDataGraph extends ConsumerWidget {
 const SizedBox(height: 10,),
                 Center(
                   child: AspectRatio(
-                    aspectRatio: 4,
+                    aspectRatio: 6,
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(2, 0, 10, 2),
                       child: LineChart(
                         LineChartData(
                             lineBarsData: [
                               LineChartBarData(
-                                spots: gpsSpots,
+                                spots: speedSpots,
                                 color: Colors.green,
                                 barWidth: 1,
                                 dotData: FlDotData(
@@ -276,6 +293,180 @@ const SizedBox(height: 10,),
                                 leftTitles: AxisTitles(
                                   axisNameWidget: Text(
                                     'Speed MPH',
+                                    style: TextStyle(color: Colors.green),
+                                  ),
+                                  axisNameSize: 50,
+                                  sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize:
+                                          25), //space around the scale text
+                                ),
+                                rightTitles: AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),),
+                            borderData: FlBorderData(
+                                show: true,
+                                border:
+                                    Border.all(width: 1, color: const Color.fromARGB(90, 0, 0, 0)))),
+                      ),
+                    ),
+                  ),
+                ),
+  //----------------------------------------------------------------------------------------------------------
+                const SizedBox(
+                  height: 10,
+                ),
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: 6,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(2, 0, 10, 2),
+                      child: LineChart(
+                        LineChartData(
+                            lineBarsData: [
+                              LineChartBarData(
+                                 spots: tpsSpots,
+                                //spots:batteryVoltageSpots,
+                                color: const Color.fromARGB(255, 242, 3, 3),
+                                barWidth: 1,
+                                dotData: FlDotData(
+                                  show: true,
+                                  checkToShowDot: (spot, barData) {
+                                    return spot.x == 1; //???
+                                  },
+                                ),
+                              ),
+                            ],
+                            // minY: 8,
+                            // maxY: 16,
+                             minY: 0,
+                        //    maxY: 100,
+                            // extraLinesData: ExtraLinesData(
+                            //   extraLinesOnTop: false,
+                            //   horizontalLines: [
+                            //     HorizontalLine(y: 14, color: Colors.red),
+                            //     HorizontalLine(y: 12, color: Colors.blue),
+                            //   ],
+                            // ),
+                            lineTouchData: LineTouchData(
+                              handleBuiltInTouches: true,
+                              touchTooltipData: LineTouchTooltipData(
+                                fitInsideVertically: true,
+                                getTooltipColor: (LineBarSpot touchedBarSpot) {
+                                  return Colors.blueAccent;
+                                },
+                                getTooltipItems:
+                                    (List<LineBarSpot> touchedSpots) {
+                                  return touchedSpots
+                                      .map((LineBarSpot touchedSpot) {
+                                    return LineTooltipItem(
+                                      // 'Battery: ${touchedSpot.y.toString()} Volts',
+                                       'TPS: ${touchedSpot.y.toString()} %',
+                                      const TextStyle(color: Colors.white),
+                                    );
+                                  }).toList();
+                                },
+                              ),
+                              touchCallback: (FlTouchEvent event,
+                                  LineTouchResponse? touchResponse) {
+                                // Update cursor position based on the touch event
+                              },
+                            ),
+                            titlesData: const FlTitlesData(
+                                topTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                                leftTitles: AxisTitles(
+                                  axisNameWidget: Text(
+                                    'Battery Voltage',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                  axisNameSize: 50,
+                                  sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize:
+                                          25), //space around the scale text
+                                ),
+                                rightTitles: AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                                bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                                ),),
+                            borderData: FlBorderData(
+                                show: true,
+                                border: Border.all(
+                                    width: 1,
+                                    color: const Color.fromARGB(90, 0, 0, 0)))),
+                      ),
+                    ),
+                  ),
+                ),
+    //----------------------------------------------------------------------------------------------------------
+                          const SizedBox(
+                  height: 10,
+                ),
+                Center(
+                //  heightFactor: .1,
+                  child: AspectRatio(
+                    aspectRatio: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(2, 0, 10, 2),
+                      child: LineChart(
+                        LineChartData(
+                            lineBarsData: [
+                              LineChartBarData(
+                                spots: afrSpots,
+                                color: Color.fromARGB(255, 252, 252, 252),
+                                barWidth: 1,
+                                dotData: FlDotData(
+                                  show: true,
+                                  checkToShowDot: (spot, barData) {
+                                    return spot.x == 1; //???
+                                  },
+                                ),
+                              ),
+                            ],
+                             minY: 10,
+                             maxY: 19,
+                            extraLinesData: ExtraLinesData(
+                              extraLinesOnTop: false,
+                              horizontalLines: [
+                                HorizontalLine(y: 14, color: Colors.red, strokeWidth: .8),
+                                HorizontalLine(y: 12, color: Colors.blue,strokeWidth: .8),
+                              ],
+                            ),
+                            lineTouchData: LineTouchData(
+                              handleBuiltInTouches: true,
+                              touchTooltipData: LineTouchTooltipData(
+                                fitInsideVertically: true,
+                                getTooltipColor: (LineBarSpot touchedBarSpot) {
+                                  return Colors.blueAccent;
+                                },
+                                getTooltipItems:
+                                    (List<LineBarSpot> touchedSpots) {
+                                  return touchedSpots
+                                      .map((LineBarSpot touchedSpot) {
+                                    return LineTooltipItem(
+                                      'AFR: ${touchedSpot.y.toString()} : 1',
+                                      const TextStyle(color: Colors.white),
+                                    );
+                                  }).toList();
+                                },
+                              ),
+                              touchCallback: (FlTouchEvent event,
+                                  LineTouchResponse? touchResponse) {
+                                // Update cursor position based on the touch event
+                              },
+                            ),
+                            titlesData: const FlTitlesData(
+                                topTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                                leftTitles: AxisTitles(
+                                  axisNameWidget: Text(
+                                    'Air Fuel Ratio',
                                     style: TextStyle(color: Colors.white),
                                   ),
                                   axisNameSize: 50,
@@ -300,12 +491,14 @@ const SizedBox(height: 10,),
                                 )),
                             borderData: FlBorderData(
                                 show: true,
-                                border:
-                                    Border.all(width: 1, color: const Color.fromARGB(90, 0, 0, 0)))),
+                                border: Border.all(
+                                    width: 1,
+                                    color: const Color.fromARGB(90, 0, 0, 0)))),
                       ),
                     ),
                   ),
-                ),
+                ), 
+    //----------------------------------------------------------------------------------------------------------        
               ],
             ),
             const SizedBox(

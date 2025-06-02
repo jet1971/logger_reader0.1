@@ -34,7 +34,11 @@ class _ChooseScreenMenuState extends ConsumerState<ChooseScreenMenu> {
     final TextEditingController menuController = TextEditingController();
 
     // Set the initial selection for the menu
-    selectedMenu ??= menuItems.first;
+    selectedMenu ??= menuItems.firstWhere(// Find the first menu item that matches the chosen content
+      (menu) => menu.id == ref.watch(chosenContentProvider),// Watch the chosen content provider to get the current selection
+      orElse: () => menuItems.first,// Default to the first item if no match is found
+    );
+    //selectedMenu ??= menuItems.first;
 
     return DropdownMenu<MenuItem>(
       inputDecorationTheme: InputDecorationTheme(
@@ -63,8 +67,7 @@ class _ChooseScreenMenuState extends ConsumerState<ChooseScreenMenu> {
       leadingIcon: selectedMenu != null
           ? Padding(
               padding: const EdgeInsets.only(
-                left: 10,
-                  right: 8.0), // Add space between icon and text
+                  left: 10, right: 8.0), // Add space between icon and text
               child: Icon(selectedMenu!.icon),
             )
           : const Padding(
@@ -76,7 +79,6 @@ class _ChooseScreenMenuState extends ConsumerState<ChooseScreenMenu> {
       menuStyle: MenuStyle(
         backgroundColor: WidgetStateProperty.all<Color>(
           Colors.black,
-          
         ),
       ),
       textStyle: const TextStyle(
@@ -89,8 +91,8 @@ class _ChooseScreenMenuState extends ConsumerState<ChooseScreenMenu> {
       dropdownMenuEntries:
           menuItems.map<DropdownMenuEntry<MenuItem>>((MenuItem menu) {
         return DropdownMenuEntry<MenuItem>(
-            value: menu,
-            label: menu.label,
+            value: menu,// Set the value of the menu item
+            label: menu.label,// Set the label of the menu item
             leadingIcon: Padding(
               padding: const EdgeInsets.only(
                   left: 8.0, right: 8.0), // Add padding for spacing in dropdown

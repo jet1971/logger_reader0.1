@@ -15,6 +15,8 @@ class ValuesText extends StatelessWidget {
   final String value;
   final Color valuesTextColor;
 
+  
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -49,9 +51,13 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
   Widget build(BuildContext context) {
 //-----------------------------------------------------------------------------------------------------
 
-    final targetTimestamp =
-        ref.watch(currentTimeStampProvider); // Current index
+ 
 
+    final selectedLap = ref.watch(selectedLapProvider);
+
+    final targetTimestamp = ref.watch(currentTimeStampProvider); // Current index
+
+ 
     num? findClosestEntry({
       required int? targetTimestamp,
       required List<Map<String, dynamic>> data,
@@ -111,7 +117,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               title: 'Speed: (mph)',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).allData,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
                 valueKey: 'speed',
               ).toString(),
@@ -121,7 +127,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               title: 'Throttle (%)',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).allData,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
                 valueKey: 'tps',
               ).toString(),
@@ -131,7 +137,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               title: 'RPM:',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).allData,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
                 valueKey: 'rpm',
               ).toString(),
@@ -142,7 +148,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               //value: engTemp.toString(),
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).allData,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
                 valueKey: 'coolantTemperature',
               ).toString(),
@@ -152,7 +158,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               title: 'Airbox Temp (C)',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).allData,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
                 valueKey: 'airTemperature',
               ).toString(),
@@ -162,7 +168,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               title: 'Airbox Pressure (PSI)',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).allData,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
                 valueKey: 'airboxPressure',
               ).toString(),
@@ -172,7 +178,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               title: 'Oil Pressure (PSI)',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).allData,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
                 valueKey: 'oilPressure',
               ).toString(),
@@ -182,7 +188,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               title: 'AFR ( :1 )',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).allData,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
                 valueKey: 'afr',
               ).toString(),
@@ -193,19 +199,19 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               title: 'Battery (Volts)',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).allData,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
-                valueKey: 'batteryVoltage',
+                 valueKey: 'batteryVoltage',              
               ).toString(),
               valuesTextColor: valueTextColor),
                        const SizedBox(height: 20),
           ValuesText(
-              title: 'Spare',
+              title: 'Lap Number',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
-                data: ref.watch(dataLogProvider.notifier).allData,
+               data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
-                valueKey: 'spare',
+                valueKey: 'lap',
               ).toString(),
               valuesTextColor: valueTextColor),
           const SizedBox(height: 20),
