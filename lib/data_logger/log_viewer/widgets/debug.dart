@@ -7,10 +7,7 @@ class DebugWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final temperatureData = ref.watch(dataLogProvider.notifier).allData;
-    final rpmData = ref.watch(dataLogProvider.notifier).allData;
-    final oilPressureData = ref.watch(dataLogProvider.notifier).allData;
-    final gpsData = ref.watch(dataLogProvider.notifier).allData;
+    final theData = ref.watch(dataLogProvider.notifier).allData;
 
     return Scaffold(
       body: Padding(
@@ -20,7 +17,7 @@ class DebugWidget extends ConsumerWidget {
           children: [
             SingleChildScrollView(
               child: Column(
-                children: gpsData.asMap().entries.map((entry) {
+                children: theData.asMap().entries.map((entry) {
                   final index = entry.key; // The integer index
                   final data = entry.value; // The actual map item
 
@@ -36,7 +33,7 @@ class DebugWidget extends ConsumerWidget {
                       ),
                       // Show your RPM
                       Text(
-                        data['rpm'].toString(),
+                        data['longitude'].toString(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -59,7 +56,7 @@ class DebugWidget extends ConsumerWidget {
             ),
             SingleChildScrollView(
               child: Column(
-                children: temperatureData.asMap().entries.map((entry) {
+                children: theData.asMap().entries.map((entry) {
                   final index = entry.key; // The integer index
                   final data = entry.value; // The actual map item
 
@@ -75,7 +72,7 @@ class DebugWidget extends ConsumerWidget {
                       ),
                       // Show your RPM
                       Text(
-                        data['coolantTemperature'].toString(),
+                        data['latitude'].toString(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -98,20 +95,20 @@ class DebugWidget extends ConsumerWidget {
             ),
             SingleChildScrollView(
              child: Column(
-                children: oilPressureData.asMap().entries.map((entry) {
+                children: theData.asMap().entries.map((entry) {
                   final index = entry.key; // The integer index
                   final data = entry.value; // The actual map item
 
                   return Row(
                     children: [
                       // Show the 1-based index (index + 1)
-                      Text(
-                        '${index + 1}. ',
-                        style: const TextStyle( 
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                      ),
+                      // Text(
+                      //   '${index + 1}. ',
+                      //   style: const TextStyle( 
+                      //     color: Colors.white,
+                      //     fontSize: 14,
+                      //   ),
+                      // ),
                       // Show your RPM
                       Text(
                         data['afr'].toString(),
@@ -122,13 +119,13 @@ class DebugWidget extends ConsumerWidget {
                       ),
                       const SizedBox(width: 10),
                       // Show your timestamp
-                      Text(
-                        data['timestamp'].toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                      ),
+                      // Text(
+                      //   data['timestamp'].toString(),
+                      //   style: const TextStyle(
+                      //     color: Colors.white,
+                      //     fontSize: 14,
+                      //   ),
+                      // ),
                     ],
                   );
                 }).toList(),

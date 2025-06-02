@@ -8,6 +8,9 @@ class ServerFileDetails {
     required this.fastestLap,
     required this.fileSize,
     required this.fileName,
+    required this.id,
+    required this.fastestLapNumber,
+    required this.version,
   });
 
   final String venue;
@@ -18,6 +21,9 @@ class ServerFileDetails {
   final String fastestLap;
   final String fileSize;
   final String fileName;
+  final String id;
+  final String fastestLapNumber;
+  final String version;
 
   // Create a factory method to construct ServerFileDetails from JSON
   factory ServerFileDetails.fromJson(Map<String, dynamic> json) {
@@ -27,9 +33,12 @@ class ServerFileDetails {
       month: json['month'] ?? '00',
       year: json['year'] ?? '0000',
       time: json['time'] ?? '00:00',
-      fastestLap: json['fastestLap'] ?? '00:00.00', // Dummy
+      fastestLap: json['fastestLap'] ?? '00:00.00', 
       fileSize: json['fileSize']?.toString() ?? '0',
       fileName: json['fileName'] ?? 'Unknown',
+      id: json['id'] ?? '0',
+      fastestLapNumber: json['fastestLapNumber']?.toString() ?? '0',
+      version: json['version'] ?? '1.0',
     );
   }
 }

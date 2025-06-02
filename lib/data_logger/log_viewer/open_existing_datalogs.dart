@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+//ignore_for_file: avoid_print
 
 import 'package:ble1/data_logger/log_viewer/log_viewer_frame.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +23,8 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
   // final GlobalKey<AnimatedListState> _listKey =
   //     GlobalKey<AnimatedListState>(); // Key to control AnimatedList
 
-  String fileContents = '';
+  //String fileContents = '';
+  Uint8List fileContents = Uint8List(0);
 
   @override
   void initState() {
@@ -40,16 +41,56 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
     return '${directory.path}$fileName';
   }
 
-  Future loadData(String fileName, WidgetRef ref) async {
-    fileContents = await readFromFile(fileName);
-    // Update the provider with the new file list
-    ref.read(dataLogProvider.notifier).setDatalog(Uint8List.fromList(fileContents.codeUnits));
-    ref.read(filenameProvider.notifier).setFileName(fileName);
+  Future<void> loadData(String fileName, WidgetRef ref) async {
+    try {
+      // Get the full file path
+      final fullPath = await getFilePath(fileName);
+
+      // Read the file as bytes
+      fileContents = await File(fullPath).readAsBytes();
+
+      // Update the provider with the new data
+      ref
+          .read(dataLogProvider.notifier)
+          .setDatalog(Uint8List.fromList(fileContents));
+      ref.read(filenameProvider.notifier).setFileName(fileName);
+
+      print('File loaded successfully: $fileName');
+    } catch (e) {
+      print('Error loading file: $e');
+    }
   }
+
+    //-----------------------------------------------------------------------------------------------------
+
+  String formatMilliseconds(int milliseconds) {
+    // Calculate minutes, seconds, and remaining milliseconds
+    int minutes = (milliseconds ~/ 60000); // 1 minute = 60000 ms
+    int seconds = ((milliseconds % 60000) ~/ 1000);
+    int remainingMilliseconds = (milliseconds % 1000);
+
+    // Format the time as 'minutes:seconds.milliseconds'
+    String formattedTime =
+        '$minutes:${seconds.toString().padLeft(2, '0')}.${remainingMilliseconds.toString().padLeft(3, '0')}';
+
+    return formattedTime;
+  }
+
+//-----------------------------------------------------------------------------------------------------
+  String formatTime(String time) {
+    String hour = time.substring(0, 2); // First 2 characters are the hour
+    String mins = time.substring(2, 4); // Characters 2-4 are the minutes
+    return '$hour:$mins';
+  }
+//-----------------------------------------------------------------------------------------------------
+
 
   @override
   Widget build(BuildContext context) {
-    final fileList = ref.watch(localFileListProvider);
+    final fileList = ref
+        .watch(localFileListProvider)
+        .where((file) => !file.endsWith('.DS_Store'))
+        .toList();
 
     var screenSize = MediaQuery.of(context).size;
     return Scaffold(
@@ -68,42 +109,58 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
                 String filePath = fileList[index];
                 String fileName = path.basename(filePath);
 
-                int colonPos = fileName.indexOf(':');
-                if (colonPos == -1 || colonPos < 12) {
-                  // Handle the error or use default values
+                int txtPos = fileName.indexOf('.txt');
+
+                // Ensure txtPos is valid
+                if (txtPos == -1 || txtPos < 22) {
                   print('Invalid filename format: $fileName');
-                  return const SizedBox(); // or handle it appropriately
+                  print('Invalid filename format: $filePath');
+                  return const SizedBox.shrink(); // Skip processing this file
                 }
 
-                if (colonPos - 12 < 0 || colonPos + 3 > fileName.length) {
-                  print('Invalid range for filename: $fileName');
-                  return const Text(
-                    'No filesss found',
-                    style: TextStyle(color: Colors.white, fontSize: 28),
-                  ); // or handle the case gracefully
+                try {
+                  String day = fileName.substring(txtPos - 8, txtPos - 6); // Extract day
+                  String time = fileName.substring(txtPos - 12, txtPos - 8); // Extract time (HHMMSS)
+                  String fastestLap = fileName.substring(txtPos - 19, txtPos - 12); // Extract fastest lap time (HHMMSS)
+                  String version = fileName.substring(txtPos - 22, txtPos - 21);
+
+                  // Additional processing...
+                } catch (e) {
+                  print('Error processing filename: $fileName, Error: $e');
                 }
 
-                String venue = fileName.substring(
-                    colonPos - 12,
-                    colonPos -
-                        10); // Extract venue initials, eg (cp = Cadwell Park), (na = not available)
+                String id = fileName.substring(
+                    1, txtPos - 22); // Extract ID from filename
+                
+                String venue = "Venue N/A"; // Default value for venue
+                // String venue = fileName.substring(
+                //     txtPos - 26,
+                //     txtPos -
+                //         25); // Extract venue initials, eg (cp = Cadwell Park), (na = not available)
                 String year = fileName.substring(
-                    colonPos - 6, colonPos - 2); // Extract year (2024)
+                    txtPos - 4, txtPos); // Extract year (2024)
                 String month = fileName.substring(
-                    colonPos - 8, colonPos - 6); // Extract month (10)
-                String day = fileName.substring(
-                    colonPos - 10, colonPos - 8); // Extract day
-                String time = fileName.substring(colonPos - 2, colonPos + 3);
-                String fastestLap = "00:00.00";
+                    txtPos - 6, txtPos - 4); // Extract month (10)
+                String day =
+                    fileName.substring(txtPos - 8, txtPos - 6); // Extract day
+                String time = fileName.substring(
+                    txtPos - 12, txtPos - 8); // Extract time (HHMMSS)
+                // String fastestLap = fileName.substring(txtPos - 19,
+                //     txtPos - 12); // Extract fastest lap time (HHMMSS)
+                String fastestLap = fileName.substring(
+                    txtPos - 19, txtPos - 12); // Extract fastest lap time (HHMMSS)
 
-                if (venue == 'ho') {
+                String version = fileName.substring(txtPos - 22, txtPos - 21);
+
+                if (venue == '1') {
                   venue = 'Home';
-                } else if (venue == 'wo') {
+                } else if (venue == '2') {
                   venue = 'Work';
-                } else if (venue == 'na') {
+                } else if (venue == '0') {
                   venue = 'Venue N/A';
                 }
-                print('printing from open_existing_datalogs_file $fileName');
+                // print('printing from open_existing_datalogs_file $fileName');
+                // print('printing from open_existing_datalogs_file $filePath');
 
                 Future<void> showMyDialog() async {
                   return showDialog<void>(
@@ -251,7 +308,6 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
                                   ),
                                 ],
                               )
-
                             //                  Screeen less than 860px
                             //-------------------------------------------------------------------------------------
                             : SizedBox(
@@ -308,16 +364,26 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
                                   ],
                                 ),
                               ),
+                        SizedBox(
+                          width: 150,
+                          child: Text(
+                            id,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.normal),
+                          ),
+                        ),
                         const SizedBox(
                           width: 15,
                         ),
                         SizedBox(
                           width: 110,
                           child: Text(
-                            time,
+                            formatTime(time), // Format the time as HH:MM
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -328,7 +394,7 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
                         SizedBox(
                           width: 120,
                           child: Text(
-                            fastestLap,
+                            formatMilliseconds(int.parse(fastestLap)), // Format the fastest lap time(millis to HH:MM:SS)                
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold),

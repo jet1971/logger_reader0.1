@@ -466,10 +466,10 @@ class GPSMapPainter extends CustomPainter {
       path.moveTo(points[i].dx, points[i].dy);
     }
 
-    // for (var point in points) {
-    //   canvas.drawCircle(point, 3, Paint()..color = Colors.black);
-    //   print(point);
-    // }
+    for (var point in points) {
+      canvas.drawCircle(point, 2, Paint()..color = Colors.black);
+      print(point);
+    }
     canvas.drawCircle(
         points[markerIndex],
         8,

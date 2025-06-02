@@ -29,7 +29,7 @@ class LogViewerFrame extends ConsumerWidget {
     } else if (chosenContent == 'engine_data') {
       mainContent = const EngineDataGraph();
     } else if (chosenContent == 'suspension_data') {
-      mainContent =  DebugWidget();
+      mainContent =  const DebugWidget();
     } else if (chosenContent == 'section_times') {
       mainContent =  const SyncedLineChart();
     } 

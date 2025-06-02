@@ -195,7 +195,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
                 targetTimestamp: targetTimestamp,
                 data: ref.watch(dataLogProvider.notifier).allData,
                 timestampKey: 'timestamp',
-                valueKey: 'batteryVoltage',
+                 valueKey: 'batteryVoltage',              
               ).toString(),
               valuesTextColor: valueTextColor),
                        const SizedBox(height: 20),
