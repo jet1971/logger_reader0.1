@@ -156,13 +156,18 @@ class DataLogProvider extends StateNotifier<Uint8List> {
     Future<String> getFilePath(String fileName) async {
     Directory directory = await getApplicationDocumentsDirectory();
     return '${directory.path}/$fileName'; // Ensure the slash is correct
+    return '${directory.path}/$fileName'; // Ensure the slash is correct
   }
 
     Future<void> writeToFile(Uint8List data, String fileName) async {
     final path = await getFilePath(fileName);
     print('Saving data to path: $path');
+    print('Saving data to path: $path');
     final file = File(path);
 
+    // Write the binary data to the file
+    await file.writeAsBytes(data);
+    print('Data written to file: $data');
     // Write the binary data to the file
     await file.writeAsBytes(data);
     print('Data written to file: $data');
@@ -177,8 +182,17 @@ class DataLogProvider extends StateNotifier<Uint8List> {
     // Save the current state (Uint8List) to the file
     await writeToFile(state, fileName);
 
+    if (state.isEmpty) {
+      print('No data to save.');
+      return;
+    }
+
+    // Save the current state (Uint8List) to the file
+    await writeToFile(state, fileName);
+
     // Trigger the provider to update after saving
     ref.read(localFileListProvider.notifier).loadLocalFileList();
+    print('Data saved to $fileName');
     print('Data saved to $fileName');
   }
 

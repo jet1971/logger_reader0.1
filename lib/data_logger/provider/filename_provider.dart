@@ -23,17 +23,28 @@ class FilenameProvider extends StateNotifier<String?> {
     // int colonPos =
     //     fileName.indexOf(':'); // Locate the time part by finding the colon
 
+    // int txtPos =
+    //     fileName.indexOf('.txt'); // Locate the end of the filename by finding '.txt'
+
+    // int colonPos =
+    //     fileName.indexOf(':'); // Locate the time part by finding the colon
+
     int txtPos =
         fileName.indexOf('.txt'); // Locate the end of the filename by finding '.txt'
 
     String venue = fileName.substring(
+ //
         txtPos - 26, txtPos - 25); // Extract venue initials
     String year =
         fileName.substring(txtPos - 4, txtPos); // Extract year (2024)
+        fileName.substring(txtPos - 4, txtPos); // Extract year (2024)
     String month =
+        fileName.substring(txtPos - 6, txtPos - 4); // Extract month (10)
+   // String day = fileName.substring(txtPos - 6, txtPos - 4); // Extract day
         fileName.substring(txtPos - 6, txtPos - 4); // Extract month (10)
     String day = fileName.substring(txtPos - 6, txtPos - 4); // Extract day
     String time =
+        fileName.substring(txtPos - 12, txtPos - 8); // Extract time
         fileName.substring(txtPos - 12, txtPos - 8); // Extract time
 
     // // Handle special cases for venue
