@@ -375,7 +375,7 @@ class GPSMapState extends ConsumerState<GPSMap> {
 
     //final rpmData = ref.watch(dataLogProvider.notifier).allData;
     final maxRpm = gpsPoints.map((p) => p['rpm']).reduce((a, b) => a > b ? a : b);
-
+print('maxRpm: $maxRpm');
     // Set the initial tap position and info
     setState(() {
       // ref.read(currentTimeStampProvider.notifier).setScreenPositionTimeStamp(
@@ -385,7 +385,7 @@ class GPSMapState extends ConsumerState<GPSMap> {
           maxSpeed); // set max speed in a provider, use in other screens, eg scale axis in graphs, set curser positions?
 
       ref.read(maxValueProvider.notifier).setMaxRpmValue(
-          maxRpm); // set max rpm in a provider, use in other screens,eg scale axis in graphs
+             maxRpm); // set max rpm in a provider, use in other screens,eg scale axis in graphs
     });
   }
 }

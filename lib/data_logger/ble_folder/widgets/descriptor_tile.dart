@@ -82,14 +82,14 @@ class _DescriptorTileState extends State<DescriptorTile> {
   Widget buildReadButton(BuildContext context) {
     return TextButton(
       onPressed: onReadPressed,
-      child: Text("Read"),
+      child: const Text("Read"),
     );
   }
 
   Widget buildWriteButton(BuildContext context) {
     return TextButton(
       onPressed: onWritePressed,
-      child: Text("Write"),
+      child: const Text("Write"),
     );
   }
 

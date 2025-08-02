@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
+import 'package:ble1/settings/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:ble1/data_logger/server_folder/choose_datalog_download.dart';
@@ -10,7 +11,9 @@ import '../widgets/system_device_tile.dart';
 import '../widgets/scan_result_tile.dart';
 
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({super.key});
+  const ScanScreen({super.key, this.selectPage});
+
+  final String? selectPage; //  parameter to determine the page to navigate to
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -27,7 +30,7 @@ class _ScanScreenState extends State<ScanScreen> {
   final Guid targetServiceUUID = Guid('BAAD');
   bool _hasNavigated = false; // Add this flag to ensure navigation happens once
 
-bool _isBluetoothCheckInProgress =
+  bool _isBluetoothCheckInProgress =
       false; // Prevents multiple Bluetooth checks
 
   Future<void> checkBluetoothStateAndPermissions() async {
@@ -43,7 +46,8 @@ bool _isBluetoothCheckInProgress =
       }
 
       // Check if Bluetooth is on
-      bool isBluetoothOn = await FlutterBluePlus.adapterState.first == BluetoothAdapterState.on;
+      bool isBluetoothOn =
+          await FlutterBluePlus.adapterState.first == BluetoothAdapterState.on;
       if (!isBluetoothOn) {
         print("Bluetooth is off. Please turn it on.");
         return;
@@ -160,6 +164,12 @@ bool _isBluetoothCheckInProgress =
       final Guid downloadFileCharacteristicUUID = Guid('A00D');
       BluetoothCharacteristic? downloadFileCharacteristic;
 
+      final Guid settingsCharacteristicUUID = Guid('B00D');
+      BluetoothCharacteristic? settingsCharacteristic;
+
+      final Guid liveDataCharacteristicUUID = Guid('C00D');
+      BluetoothCharacteristic? liveDataCharacteristic;
+
       for (BluetoothService service in services) {
         if (service.uuid == targetServiceUUID) {
           // Find the characteristic in the service
@@ -174,10 +184,16 @@ bool _isBluetoothCheckInProgress =
             } else if (characteristic.uuid == downloadFileCharacteristicUUID) {
               downloadFileCharacteristic = characteristic;
               print('Found Download File Characteristic');
-
+            } else if (characteristic.uuid == settingsCharacteristicUUID) {
+              settingsCharacteristic = characteristic;
+              print('Found Settings Characteristic');
+            } else if (characteristic.uuid == liveDataCharacteristicUUID) {
+              liveDataCharacteristic = characteristic;
+              print('Found Live Data Characteristic');
               break;
             }
           }
+          //--------------------------------------------------------------------------
           if (readFileDetailCharacteristic != null &&
               deleteFileCharacteristic != null &&
               downloadFileCharacteristic != null) {
@@ -185,22 +201,37 @@ bool _isBluetoothCheckInProgress =
           }
         }
       }
+      //--------------------------------------------------------------------------
 
-      // Check if the characteristic is found before navigating
-      if (readFileDetailCharacteristic != null &&
-          deleteFileCharacteristic != null &&
-          downloadFileCharacteristic != null &&
-          mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => //DeviceScreen(device: device)
-                ChooseLogDownload(
-              readFileDetailCharacteristic: readFileDetailCharacteristic!,
-              deleteFileCharacteristic: deleteFileCharacteristic!,
-              downloadFileCharacteristic: downloadFileCharacteristic!,
+      // Navigate to ChooseLogDownload screen if the service and characteristics are found
+      if (widget.selectPage == 'downloadScreen') {
+        if (readFileDetailCharacteristic != null &&
+            deleteFileCharacteristic != null &&
+            downloadFileCharacteristic != null &&
+            mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => //DeviceScreen(device: device)
+                  ChooseLogDownload(
+                readFileDetailCharacteristic: readFileDetailCharacteristic!,
+                deleteFileCharacteristic: deleteFileCharacteristic!,
+                downloadFileCharacteristic: downloadFileCharacteristic!,
+              ),
             ),
-          ),
-        );
+          );
+        }
+      } else if (widget.selectPage == 'settingsScreen') {
+        if (settingsCharacteristic != null && mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => //DeviceScreen(device: device)
+                  Settings(
+                settingsCharacteristic: settingsCharacteristic!,
+                liveDataCharacteristic: liveDataCharacteristic!,
+              ),
+            ),
+          );
+        }
       } else {
         print("Target service or characteristic not found.");
       }

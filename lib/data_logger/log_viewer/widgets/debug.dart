@@ -72,7 +72,7 @@ class DebugWidget extends ConsumerWidget {
                       ),
                       // Show your RPM
                       Text(
-                        data['batteryVoltage'].toString(),
+                        data['speed'].toString(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,

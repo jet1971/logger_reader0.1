@@ -1,14 +1,13 @@
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:ble1/data_logger/models/server_file_details.dart';
 import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/local_file_list_provider.dart';
-import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/logger_first_screen.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ble1/data_logger/log_viewer/log_viewer_frame.dart';
 import 'package:ble1/data_logger/provider/filename_provider.dart';
 

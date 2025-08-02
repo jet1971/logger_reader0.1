@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Class to hold both maxSpeed and maxRpm
 class MaxValues {
   final double maxSpeed;
-  final int maxRpm;
+  final double maxRpm;
 
   MaxValues({required this.maxSpeed, required this.maxRpm});
 
   // Create a copy of the current MaxValues with updated maxSpeed or maxRpm
-  MaxValues copyWith({double? maxSpeed, int? maxRpm}) {
+  MaxValues copyWith({double? maxSpeed, double? maxRpm}) {
     return MaxValues(
       maxSpeed: maxSpeed ?? this.maxSpeed,
       maxRpm: maxRpm ?? this.maxRpm,
@@ -25,7 +25,7 @@ class MaxValueProvider extends StateNotifier<MaxValues> {
   }
 
   // Update the maxRpm
-  void setMaxRpmValue(int value) {
+  void setMaxRpmValue(double value) {
     state = state.copyWith(maxRpm: value);
     print(value);
   }

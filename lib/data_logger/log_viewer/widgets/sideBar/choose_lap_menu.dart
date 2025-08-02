@@ -231,11 +231,13 @@ class ChooseLapMenu extends ConsumerWidget {
 
     // Exclude lap 0 if desired
     lapTimes.remove(0);
-    lapTimes.remove(laps.last); // Remove the last lap from fastest lap calculation
+    lapTimes
+        .remove(laps.last); // Remove the last lap from fastest lap calculation
 
-    // Find the fastest lap
-    final bestLap =
-        lapTimes.entries.reduce((a, b) => a.value < b.value ? a : b).key;
+    // Find the fastest lap, default to lap 0 if no other laps exist
+    final bestLap = lapTimes.isNotEmpty
+        ? lapTimes.entries.reduce((a, b) => a.value < b.value ? a : b).key
+        : 0; // Default to lap 0 if lapTimes is empty
 
     final menuItems = laps.map((lap) {
       final data = lapMap[lap]!;
@@ -276,7 +278,7 @@ class ChooseLapMenu extends ConsumerWidget {
       },
       dropdownMenuEntries: menuItems,
       width: 220,
-     // label: const Text('Lap', style: TextStyle(color: menuButtonText)),
+      // label: const Text('Lap', style: TextStyle(color: menuButtonText)),
       controller: TextEditingController(),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

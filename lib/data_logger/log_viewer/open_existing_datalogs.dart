@@ -8,7 +8,6 @@ import 'dart:typed_data';
 import 'package:path/path.dart' as path;
 import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/local_file_list_provider.dart';
-import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/logger_first_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ble1/data_logger/provider/filename_provider.dart';
 
@@ -159,13 +158,27 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
                   venue = 'Work';
                 } else if (venue == "2") {
                   venue = 'Home';
+                } else if (venue == "3") {
+                  venue = 'Aintree';
+                } else if (venue == "4") {
+                  venue = 'Services';
+                } else if (venue == "5") {
+                  venue = 'Cadwell';
+                } else if (venue == "6") {
+                  venue = 'Oulton';
+                } else if (venue == "7") {
+                  venue = 'IOM';
+                } else if (venue == "8") {
+                  venue = 'Venue N/A';
+                } else if (venue == "9") {
+                  venue = 'Venue N/A';
                 } else if (venue == "0") {
                   venue = 'Venue N/A';
                 }
-                // print('printing from open_existing_datalogs_file $fileName');
-                // print('printing from open_existing_datalogs_file $filePath');
+                 // print('printing from open_existing_datalogs_file $fileName');
+                 // print('printing from open_existing_datalogs_file $filePath');
 
-                Future<void> showMyDialog() async {
+                 Future<void> showMyDialog() async {
                   return showDialog<void>(
                     context: context,
                     barrierDismissible: true,

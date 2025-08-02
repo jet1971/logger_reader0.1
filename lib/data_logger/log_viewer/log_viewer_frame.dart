@@ -1,11 +1,8 @@
 import 'package:ble1/data_logger/log_viewer/engine_data_graph.dart';
-import 'package:ble1/data_logger/log_viewer/example_graph.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/logger_first_screen.dart';
 import 'package:ble1/data_logger/log_viewer/sync_line_chart.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/debug.dart';
-import 'package:ble1/data_logger/log_viewer/widgets/sideBar/another_example.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/sideBar/side_bar.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:ble1/util/responsive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

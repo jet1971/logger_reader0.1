@@ -65,9 +65,11 @@ double roundUpToNext10(double number) {
   return (number / 10).ceil() * 10;
 }
 
-double roundUpToNext1000(num number) {
+double roundUpToNext1000(int number) {
   // used for rpm axis, rounds scale up to next 1000
- // return (number).ceil() * 1000;
+  // return (number).ceil() * 1000;
+  // print('maxY: ${roundUpToNext1000(maxValues.maxRpm)}'),
+  print('maxY: $number');
   return (number / 1000).ceil() * 1000;
 }
 
@@ -84,24 +86,23 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
 
   @override
   Widget build(BuildContext context) {
-   // final data = ref.watch(dataLogProvider.notifier).allData;
+    // final data = ref.watch(dataLogProvider.notifier).allData;
     final maxValues = ref.watch(maxValueProvider);
     print(maxValues.maxSpeed);
     print(maxValues.maxRpm);
 
-        final fastestLap = ref.watch(dataLogProvider.notifier).getFastestLap();
+    final fastestLap = ref.watch(dataLogProvider.notifier).getFastestLap();
     // final fastestLapData = ref.watch(dataLogProvider.notifier).getLap(fastestLap);
-   // final data = ref.watch(dataLogProvider.notifier).getLap(2);
+    // final data = ref.watch(dataLogProvider.notifier).getLap(2);
 
-      // Watch selected lap number (triggers rebuilds)
+    // Watch selected lap number (triggers rebuilds)
     final selectedLap = ref.watch(selectedLapProvider);
 
 // Watch raw data log state to trigger updates on data changes
- //   final rawData = ref.watch(dataLogProvider);
+    //   final rawData = ref.watch(dataLogProvider);
 
 // Call method to extract the selected lap (does NOT trigger rebuilds on its own)
     final lapData = ref.read(dataLogProvider.notifier).getLap(selectedLap);
-
 
     // Convert data to FlSpots
 
@@ -109,13 +110,34 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
         lapData,
         'rpm',
         'timestamp',
-       40500); //dataName, timestamp, threshold, if for example the rpm is 1000 and the next is 10000, it will be skipped
+        40500); //dataName, timestamp, threshold, if for example the rpm is 1000 and the next is 10000, it will be skipped
 
-    List<FlSpot> gpsSpots = _convertToSpotsWithFilter(
+    List<FlSpot> speedSpots = _convertToSpotsWithFilter(
         lapData,
         'speed',
         'timestamp',
         20); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    //  print('rpmSpots $rpmSpots');
+
+    List<FlSpot> afrSpots = _convertToSpotsWithFilter(
+        lapData,
+        'afr',
+        'timestamp',
+        20); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    //  print('rpmSpots $rpmSpots');
+
+    List<FlSpot> tpsSpots = _convertToSpotsWithFilter(
+        lapData,
+        'tps',
+        'timestamp',
+        200); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    //  print('rpmSpots $rpmSpots');
+
+    List<FlSpot> engineTemperatureSpots = _convertToSpotsWithFilter(
+        lapData,
+        'coolantTemperature',
+        'timestamp',
+        2000); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
     //  print('rpmSpots $rpmSpots');
 
     return Padding(
@@ -140,9 +162,11 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                     dotData: const FlDotData(show: false),
                   ),
                 ],
-                 minY: 0,
-           //     maxY: roundUpToNext1000(maxValues.maxRpm), // function to round up the axis to the next 10
-                maxY: 10000,
+                minY: 0,
+                //  maxY: roundUpToNext1000(maxValues.maxRpm), // function to round up the axis to the next 10
+                //  maxY:roundUpToNext1000(13200),
+
+                maxY: 15000,
 
                 lineTouchData: LineTouchData(
                   // touchSpotThreshold: 1,
@@ -224,15 +248,123 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                 lineBarsData: [
                   LineChartBarData(
                     showingIndicators: <int>[touchIndex],
-                    spots: gpsSpots, // Using gpsSpots
+                    spots: speedSpots, // Using gpsSpots
                     belowBarData: BarAreaData(show: false),
-                    color: Colors.red,
+                    color: Colors.green,
                     barWidth: 1,
                     dotData: const FlDotData(show: false),
                   ),
                 ],
                 maxY: roundUpToNext10(maxValues
                     .maxSpeed), // function to round up the axis to the next 10
+                lineTouchData: LineTouchData(
+                  //    touchSpotThreshold: 1,
+                  handleBuiltInTouches: false,
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (LineBarSpot touchedBarSpot) {
+                      return Colors.white;
+                    },
+                    getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                      return touchedSpots.map((LineBarSpot touchedSpot) {
+                        return LineTooltipItem(
+                          'Speed: ${touchedSpot.x.toString()} MPH',
+                          const TextStyle(color: Colors.white),
+                        );
+                      }).toList();
+                    },
+                  ),
+                  touchCallback:
+                      (FlTouchEvent event, LineTouchResponse? touchResponse) {
+                    setState(() {
+                      if (touchResponse != null &&
+                          touchResponse.lineBarSpots != null) {
+                        // Update the touchIndex based on the closest x value in the data
+                        int touchResponseTimestamp =
+                            touchResponse.lineBarSpots![0].x.toInt();
+                        ref
+                            .read(currentTimeStampProvider.notifier)
+                            .setScreenPositionTimeStamp(
+                                touchResponseTimestamp); // get the timstamp of the current screen position and set in the provider
+                        // logger first screen wants a index not a timestamp...
+
+                        touchIndex = _findClosestSpotIndex(
+                            speedSpots, touchResponse.lineBarSpots![0].x);
+
+                        ref.read(indexProvider.notifier).setIndex(touchIndex);
+
+                        // print('touch: ${touchResponse.lineBarSpots![0].x}');
+                        //  print('bottom: $touchIndex');
+                      }
+                    });
+                  },
+                ),
+
+//-------------------------------------------------------------------------------------------------
+                titlesData: const FlTitlesData(
+                  topTitles:
+                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles:
+                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+//-------------------------------------------------------------------------------------------------
+
+                  leftTitles: AxisTitles(
+                    axisNameWidget: Text('Speed MPH',
+                        style: TextStyle(color: Colors.white)),
+                    sideTitles: SideTitles(
+                      interval: 10,
+                      reservedSize: 50,
+                      showTitles: true,
+                      getTitlesWidget: mphTitlesWidget,
+                    ),
+                  ),
+
+//-------------------------------------------------------------------------------------------------
+                  // bottomTitles: AxisTitles(
+                  //   axisNameWidget:
+                  //       Text('Time', style: TextStyle(color: Colors.white)),
+                  //   sideTitles: SideTitles(
+                  //     interval: 40000,
+                  //     reservedSize: 30,
+                  //     showTitles: true,
+                  //     getTitlesWidget: elapsedTimeTitlesWidget,
+                  //   ),
+                  // ),
+                ),
+
+//-------------------------------------------------------------------------------------------------
+                borderData:
+                    FlBorderData(show: true, border: Border.all(width: 0.2)),
+//-------------------------------------------------------------------------------------------------
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+
+//-------------------------------------------------------------------------------------------------
+          // Third LineChart (AFR Data)-------------------------------------------------------------------------------
+
+          Expanded(
+            child: LineChart(
+              LineChartData(
+                lineBarsData: [
+                  LineChartBarData(
+                    showingIndicators: <int>[touchIndex],
+                    spots: afrSpots, // Using gpsSpots
+                    belowBarData: BarAreaData(show: false),
+                    color: Colors.red,
+                    barWidth: 1,
+                    dotData: const FlDotData(show: false),
+                  ),
+                ],
+                minY: 10,
+                maxY: 20,
+
+                // maxY: roundUpToNext10(maxValues
+                //     .maxSpeed),
+
+                // function to round up the axis to the next 10
                 lineTouchData: LineTouchData(
                   //    touchSpotThreshold: 1,
                   handleBuiltInTouches: false,
@@ -264,7 +396,7 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                         // logger first screen wants a index not a timestamp...
 
                         touchIndex = _findClosestSpotIndex(
-                            gpsSpots, touchResponse.lineBarSpots![0].x);
+                            afrSpots, touchResponse.lineBarSpots![0].x);
 
                         ref.read(indexProvider.notifier).setIndex(touchIndex);
 
@@ -284,8 +416,8 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
 //-------------------------------------------------------------------------------------------------
 
                   leftTitles: AxisTitles(
-                    axisNameWidget: Text('Speed MPH',
-                        style: TextStyle(color: Colors.white)),
+                    axisNameWidget:
+                        Text('AFR', style: TextStyle(color: Colors.white)),
                     sideTitles: SideTitles(
                       interval: 10,
                       reservedSize: 50,
@@ -314,8 +446,212 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
               ),
             ),
           ),
-          const SizedBox(
-            height: 10,
+
+          // Fourth LineChart -------------------------------------------------------------------------------
+          Expanded(
+            child: LineChart(
+              LineChartData(
+                lineBarsData: [
+                  LineChartBarData(
+                    showingIndicators: <int>[touchIndex],
+                    spots: tpsSpots, // Using gpsSpots
+                    belowBarData: BarAreaData(show: false),
+                    color: Colors.white,
+                    barWidth: 1,
+                    dotData: const FlDotData(show: false),
+                  ),
+                ],
+
+                // maxY: roundUpToNext10(maxValues
+                //     .maxSpeed),
+                minY: 0,
+                maxY: 100,
+
+                // function to round up the axis to the next 10
+                lineTouchData: LineTouchData(
+                  //    touchSpotThreshold: 1,
+                  handleBuiltInTouches: false,
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (LineBarSpot touchedBarSpot) {
+                      return Colors.white;
+                    },
+                    getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                      return touchedSpots.map((LineBarSpot touchedSpot) {
+                        return LineTooltipItem(
+                          'Speed: ${touchedSpot.x.toString()} MPH',
+                          const TextStyle(color: Colors.white),
+                        );
+                      }).toList();
+                    },
+                  ),
+                  touchCallback:
+                      (FlTouchEvent event, LineTouchResponse? touchResponse) {
+                    setState(() {
+                      if (touchResponse != null &&
+                          touchResponse.lineBarSpots != null) {
+                        // Update the touchIndex based on the closest x value in the data
+                        int touchResponseTimestamp =
+                            touchResponse.lineBarSpots![0].x.toInt();
+                        ref
+                            .read(currentTimeStampProvider.notifier)
+                            .setScreenPositionTimeStamp(
+                                touchResponseTimestamp); // get the timstamp of the current screen position and set in the provider
+                        // logger first screen wants a index not a timestamp...
+
+                        touchIndex = _findClosestSpotIndex(
+                            tpsSpots, touchResponse.lineBarSpots![0].x);
+
+                        ref.read(indexProvider.notifier).setIndex(touchIndex);
+
+                        // print('touch: ${touchResponse.lineBarSpots![0].x}');
+                        //  print('bottom: $touchIndex');
+                      }
+                    });
+                  },
+                ),
+
+//-------------------------------------------------------------------------------------------------
+                titlesData: const FlTitlesData(
+                  topTitles:
+                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles:
+                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+//-------------------------------------------------------------------------------------------------
+
+                  leftTitles: AxisTitles(
+                    axisNameWidget:
+                        Text('TPS', style: TextStyle(color: Colors.white)),
+                    sideTitles: SideTitles(
+                      interval: 10,
+                      reservedSize: 50,
+                      showTitles: true,
+                      getTitlesWidget: mphTitlesWidget,
+                    ),
+                  ),
+
+//-------------------------------------------------------------------------------------------------
+                  // bottomTitles: AxisTitles(
+                  //   axisNameWidget:
+                  //       Text('Time', style: TextStyle(color: Colors.white)),
+                  //   sideTitles: SideTitles(
+                  //     interval: 40000,
+                  //     reservedSize: 30,
+                  //     showTitles: true,
+                  //     getTitlesWidget: elapsedTimeTitlesWidget,
+                  //   ),
+                  // ),
+                ),
+
+//-------------------------------------------------------------------------------------------------
+                borderData:
+                    FlBorderData(show: true, border: Border.all(width: 0.2)),
+//-------------------------------------------------------------------------------------------------
+              ),
+            ),
+          ),
+
+          // Fourth LineChart -------------------------------------------------------------------------------
+          Expanded(
+            child: LineChart(
+              LineChartData(
+                lineBarsData: [
+                  LineChartBarData(
+                    showingIndicators: <int>[touchIndex],
+                    spots: engineTemperatureSpots, // Using gpsSpots
+                    belowBarData: BarAreaData(show: false),
+                    color: Colors.white,
+                    barWidth: 1,
+                    dotData: const FlDotData(show: false),
+                  ),
+                ],
+
+                // maxY: roundUpToNext10(maxValues
+                //     .maxSpeed),
+                minY: 30,
+                maxY: 100,
+
+                // function to round up the axis to the next 10
+                lineTouchData: LineTouchData(
+                  //    touchSpotThreshold: 1,
+                  handleBuiltInTouches: false,
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (LineBarSpot touchedBarSpot) {
+                      return Colors.white;
+                    },
+                    getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                      return touchedSpots.map((LineBarSpot touchedSpot) {
+                        return LineTooltipItem(
+                          'Speed: ${touchedSpot.x.toString()} MPH',
+                          const TextStyle(color: Colors.white),
+                        );
+                      }).toList();
+                    },
+                  ),
+                  touchCallback:
+                      (FlTouchEvent event, LineTouchResponse? touchResponse) {
+                    setState(() {
+                      if (touchResponse != null &&
+                          touchResponse.lineBarSpots != null) {
+                        // Update the touchIndex based on the closest x value in the data
+                        int touchResponseTimestamp =
+                            touchResponse.lineBarSpots![0].x.toInt();
+                        ref
+                            .read(currentTimeStampProvider.notifier)
+                            .setScreenPositionTimeStamp(
+                                touchResponseTimestamp); // get the timstamp of the current screen position and set in the provider
+                        // logger first screen wants a index not a timestamp...
+
+                        touchIndex = _findClosestSpotIndex(
+                            engineTemperatureSpots,
+                            touchResponse.lineBarSpots![0].x);
+
+                        ref.read(indexProvider.notifier).setIndex(touchIndex);
+
+                        // print('touch: ${touchResponse.lineBarSpots![0].x}');
+                        //  print('bottom: $touchIndex');
+                      }
+                    });
+                  },
+                ),
+
+//-------------------------------------------------------------------------------------------------
+                titlesData: const FlTitlesData(
+                  topTitles:
+                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles:
+                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+//-------------------------------------------------------------------------------------------------
+
+                  leftTitles: AxisTitles(
+                    axisNameWidget: Text('Engine Temperature',
+                        style: TextStyle(color: Colors.white)),
+                    sideTitles: SideTitles(
+                      interval: 10,
+                      reservedSize: 50,
+                      showTitles: true,
+                      getTitlesWidget: mphTitlesWidget,
+                    ),
+                  ),
+
+//-------------------------------------------------------------------------------------------------
+                  // bottomTitles: AxisTitles(
+                  //   axisNameWidget:
+                  //       Text('Time', style: TextStyle(color: Colors.white)),
+                  //   sideTitles: SideTitles(
+                  //     interval: 40000,
+                  //     reservedSize: 30,
+                  //     showTitles: true,
+                  //     getTitlesWidget: elapsedTimeTitlesWidget,
+                  //   ),
+                  // ),
+                ),
+
+//-------------------------------------------------------------------------------------------------
+                borderData:
+                    FlBorderData(show: true, border: Border.all(width: 0.2)),
+//-------------------------------------------------------------------------------------------------
+              ),
+            ),
           ),
         ],
       ),

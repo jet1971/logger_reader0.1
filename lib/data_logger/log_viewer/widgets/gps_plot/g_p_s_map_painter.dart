@@ -9,8 +9,8 @@ class GPSMapPainter extends CustomPainter {
   final List<Offset> points;
   //final List<GPSPoint> gpsPoints;
   final List<Map<String, dynamic>> gpsPoints;
-  final double highSpeedThreshold = 41.0;
-  final double mediumSpeedThreshold = 25.0;
+  final double highSpeedThreshold = 140.0;
+  final double mediumSpeedThreshold = 80.0;
 
   @override
   void paint(

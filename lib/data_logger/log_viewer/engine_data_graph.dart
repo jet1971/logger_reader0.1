@@ -202,7 +202,7 @@ class EngineDataGraph extends ConsumerWidget {
                               leftTitles: AxisTitles(
                                 axisNameWidget: Text(
                                   'RPM',
-                                  style: TextStyle(color: Colors.blue),
+                                  style: TextStyle(color: Colors.white),
                                 ),
                                 axisNameSize: 50,
                                 drawBelowEverything: false,
@@ -293,7 +293,7 @@ const SizedBox(height: 10,),
                                 leftTitles: AxisTitles(
                                   axisNameWidget: Text(
                                     'Speed MPH',
-                                    style: TextStyle(color: Colors.green),
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                   axisNameSize: 50,
                                   sideTitles: SideTitles(
@@ -380,8 +380,8 @@ const SizedBox(height: 10,),
                                     sideTitles: SideTitles(showTitles: false)),
                                 leftTitles: AxisTitles(
                                   axisNameWidget: Text(
-                                    'Battery Voltage',
-                                    style: TextStyle(color: Colors.red),
+                                    'TPS',
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                   axisNameSize: 50,
                                   sideTitles: SideTitles(
@@ -419,7 +419,7 @@ const SizedBox(height: 10,),
                             lineBarsData: [
                               LineChartBarData(
                                 spots: afrSpots,
-                                color: Color.fromARGB(255, 252, 252, 252),
+                                color: const Color.fromARGB(255, 252, 252, 252),
                                 barWidth: 1,
                                 dotData: FlDotData(
                                   show: true,

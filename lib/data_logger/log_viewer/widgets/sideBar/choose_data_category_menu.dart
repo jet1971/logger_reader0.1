@@ -14,8 +14,8 @@ class MenuItem {
 List<MenuItem> menuItems = [
   MenuItem('track_report', 'Track Report', Icons.data_exploration_sharp),
   MenuItem('engine_data', 'Engine', Icons.speed_sharp),
-  MenuItem('suspension_data', 'Suspension', Icons.motorcycle_outlined),
-  MenuItem('section_times', 'Section Times', Icons.timer),
+  MenuItem('suspension_data', 'Debug/Raw', Icons.motorcycle_outlined),
+  MenuItem('section_times', 'Linked Graphs', Icons.timer),
 ];
 
 class ChooseScreenMenu extends ConsumerStatefulWidget {

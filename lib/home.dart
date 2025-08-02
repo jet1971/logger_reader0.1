@@ -59,7 +59,7 @@ class Home extends StatelessWidget {
                 ),
                 HomePageButton(
                   title: 'Download Data Logs',
-                  page: ScanScreen(),
+                  page: ScanScreen(selectPage: 'downloadScreen',),
                 ),
                 SizedBox(
                   height: 30,
@@ -73,12 +73,14 @@ class Home extends StatelessWidget {
                 ),
                 HomePageButton(
                   title: 'Logger Settings',
-                  page: TestPage(),
+                //  page: Settings(),
+                 page: ScanScreen(selectPage: 'settingsScreen',),
                 ),
                 SizedBox(
                   height: 30,
                 ),
-                HomePageButton(title: 'ToolBox'),
+                HomePageButton(title: 'ToolBox',
+                page: TestPage(),),
                 SizedBox(
                   height: 30,
                 ),
