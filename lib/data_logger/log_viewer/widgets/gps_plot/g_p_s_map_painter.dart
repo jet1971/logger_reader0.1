@@ -1,17 +1,21 @@
 // ignore_for_file: avoid_print
-
-import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/logger_first_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/logger_first_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ble1/data_logger/provider/chosen_data_provider.dart';
 
 class GPSMapPainter extends CustomPainter {
-  GPSMapPainter(this.points, this.gpsPoints);
+  GPSMapPainter(this.points, this.gpsPoints, this.ref);
 
   final List<Offset> points;
-  //final List<GPSPoint> gpsPoints;
   final List<Map<String, dynamic>> gpsPoints;
-  final double highSpeedThreshold = 140.0;
-  final double mediumSpeedThreshold = 80.0;
+  final WidgetRef ref;
 
+  double lowThreshold = 0;
+  double mediumThreshold = 50;
+  double highThreshold = 100;
+
+  @override
   @override
   void paint(
     Canvas canvas,
@@ -19,17 +23,34 @@ class GPSMapPainter extends CustomPainter {
   ) {
     if (points.isEmpty) return;
 
-    final paintLowSpeed = Paint()
+    final chosenDataCategory = ref.watch(chosenDataProvider);
+
+    switch (chosenDataCategory) {
+      case 'speed':
+        mediumThreshold = 70;
+        highThreshold = 140;
+      case 'tps':
+        mediumThreshold = 50;
+        highThreshold = 95;
+      case 'coolantTemperature':
+        mediumThreshold = 50;
+        highThreshold = 90;
+      default:
+        mediumThreshold = 150;
+        highThreshold = 150;
+    }
+
+    final paintLow = Paint()
       ..color = Colors.green
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
-    final paintMediumSpeed = Paint()
+    final paintMedium = Paint()
       ..color = const Color.fromARGB(255, 242, 154, 47)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
-    final paintHighSpeed = Paint()
+    final paintHigh = Paint()
       ..color = Colors.red
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
@@ -40,12 +61,12 @@ class GPSMapPainter extends CustomPainter {
     for (int i = 1; i < points.length; i++) {
       path.lineTo(points[i].dx, points[i].dy);
 
-      if (gpsPoints[i]['speed'] > highSpeedThreshold) {
-        canvas.drawPath(path, paintHighSpeed);
-      } else if (gpsPoints[i]['speed'] > mediumSpeedThreshold) {
-        canvas.drawPath(path, paintMediumSpeed);
+      if (gpsPoints[i][chosenDataCategory] >= highThreshold) {
+        canvas.drawPath(path, paintHigh);
+      } else if (gpsPoints[i][chosenDataCategory] >= mediumThreshold) {
+        canvas.drawPath(path, paintMedium);
       } else {
-        canvas.drawPath(path, paintLowSpeed);
+        canvas.drawPath(path, paintLow);
       }
 
       path.reset();

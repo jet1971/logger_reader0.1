@@ -90,7 +90,6 @@ class _DownloadDataLogState extends ConsumerState<DownloadDataLog> {
                 .length; // Each time receive data, add the length to bytesReceived
           });
 
-
           // Store the raw bytes in fileReceiver
           fileReceiver.addData(value);
 
@@ -109,14 +108,11 @@ class _DownloadDataLogState extends ConsumerState<DownloadDataLog> {
             // end of file
             print("File transfer complete");
 
-
-
             ref.read(dataLogProvider.notifier).setDatalog(
                 fileReceiver.fileData); // pass the data to the provider
 
             ref.read(filenameProvider.notifier).setFileName(widget
                 .fileName); // pass file name to the file name formatter(display in bottom of each log viewer screen)
-
 
             setState(() {
               // fileContents = utf8.decode(fileReceiver.fileData);
@@ -142,7 +138,7 @@ class _DownloadDataLogState extends ConsumerState<DownloadDataLog> {
 
           // Add received data to fileReceiver
           // fileReceiver.addData(value);
-           print("Processed chunk of size: ${value.length}");
+          print("Processed chunk of size: ${value.length}");
 
           // After processing the chunk, send a request for the next chunk
           await _requestNextChunk(c);
@@ -206,6 +202,7 @@ class _DownloadDataLogState extends ConsumerState<DownloadDataLog> {
   @override
   Widget build(BuildContext context) {
     //  final datalog = ref.watch(dataLogProvider);
+    var screenSize = MediaQuery.of(context).size;
 
     double progress = (bytesReceived / widget.fileSize).clamp(0.0, 1.0);
     return Scaffold(
@@ -214,9 +211,25 @@ class _DownloadDataLogState extends ConsumerState<DownloadDataLog> {
       ),
       body: Column(
         children: [
-          const SizedBox(
-            height: 200,
-          ), // just added to move the progress indicator down
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: screenSize.height < 400
+                ? Text(
+                    'Progress: ${(progress * 100).toStringAsFixed(2)}%', // Show progress percentage
+                    style: const TextStyle(color: Colors.white, fontSize: 30),
+                  )
+                : const Text(''),
+          ),
+
+          screenSize.height > 400
+              ? const SizedBox(
+                  height: 200,
+                )
+              : const SizedBox(
+                  height: 0,
+                ),
+          // just added to move the progress indicator down
+
           if (isLoading)
             SizedBox(
               width:
@@ -236,10 +249,12 @@ class _DownloadDataLogState extends ConsumerState<DownloadDataLog> {
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Text(
-              'Progress: ${(progress * 100).toStringAsFixed(2)}%', // Show progress percentage
-              style: const TextStyle(color: Colors.white, fontSize: 30),
-            ),
+            child: screenSize.height > 400
+                ? Text(
+                    'Progress: ${(progress * 100).toStringAsFixed(2)}%', // Show progress percentage
+                    style: const TextStyle(color: Colors.white, fontSize: 30),
+                  )
+                : const Text(''),
           ),
         ],
       ),

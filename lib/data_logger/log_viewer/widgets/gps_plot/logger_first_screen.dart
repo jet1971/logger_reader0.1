@@ -1,4 +1,5 @@
 // ignore_for_file: avoid_print
+import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/choose_gps_plot_data_menu.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/g_p_s_map_painter.dart';
 import 'package:ble1/data_logger/provider/max_value_provider.dart';
 import 'package:flutter/material.dart';
@@ -24,26 +25,26 @@ int markerIndex = 0;
 class LoggerFirstScreen extends ConsumerWidget {
   const LoggerFirstScreen({
     super.key,
-   // required this.fileName,
+    // required this.fileName,
   });
 
   //final String fileName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     final selectedLap = ref.watch(selectedLapProvider);
     final rawData = ref.watch(dataLogProvider);
     //final lapData = ref.watch(dataLogProvider.notifier).getLap(selectedLap);
- 
+
     final parsedFilename = ref.watch(
         filenameProvider); // This will give the formatted filename or null
-   
-    markerIndex = ref.watch(indexProvider); //markerIndex = ref.watch(indexProvider);
+
+    markerIndex =
+        ref.watch(indexProvider); //markerIndex = ref.watch(indexProvider);
 
     return Scaffold(
       body: GPSMap(
-      //  dataLog: lapData,
+        //  dataLog: lapData,
         parsedFilename: parsedFilename!,
       ),
     );
@@ -51,13 +52,8 @@ class LoggerFirstScreen extends ConsumerWidget {
 }
 
 class GPSMap extends ConsumerStatefulWidget {
-  const GPSMap(
-      {required this.parsedFilename,
-      super.key
-      });
+  const GPSMap({required this.parsedFilename, super.key});
 
-  //final List<Map<String, dynamic>> dataLog;
-  //final List<GPSPoint> dataLog;
   final String parsedFilename;
 
   @override
@@ -66,7 +62,7 @@ class GPSMap extends ConsumerStatefulWidget {
 
 class GPSMapState extends ConsumerState<GPSMap> {
   // late final List<GPSPoint> gpsPoints;
-  late  List<Map<String, dynamic>> gpsPoints;
+  late List<Map<String, dynamic>> gpsPoints;
 
   @override
   void didChangeDependencies() {
@@ -109,6 +105,7 @@ class GPSMapState extends ConsumerState<GPSMap> {
 
   @override
   Widget build(BuildContext context) {
+    var screenSize = MediaQuery.of(context).size;
 
     final selectedLap = ref.watch(selectedLapProvider);
     gpsPoints = ref.watch(dataLogProvider.notifier).getLap(selectedLap);
@@ -117,7 +114,6 @@ class GPSMapState extends ConsumerState<GPSMap> {
       return const Center(child: Text('No data for this lap'));
     }
 
-    
     final double minLat = gpsPoints
         .map((p) => p['latitude'])
         .reduce((a, b) => a < b ? a : b); // Find the minimum latitude
@@ -141,6 +137,7 @@ class GPSMapState extends ConsumerState<GPSMap> {
           }
         }
       },
+
       child: Shortcuts(
         shortcuts: {
           LogicalKeySet(LogicalKeyboardKey.arrowLeft): const LeftArrowIntent(),
@@ -215,46 +212,81 @@ class GPSMapState extends ConsumerState<GPSMap> {
                         color: const Color(
                             //  0xFF15131C), // change the backgroung color of the track plot
                             0xFF21222D),
-                        child: Stack(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            CustomPaint(
-                              size: Size(
-                                  constraints.maxWidth, constraints.maxHeight),
-                              painter: GPSMapPainter(screenPoints, gpsPoints),
+                            screenSize.width < 770 && screenSize.width > 600
+                                ? const Row(
+                                    children: [
+                                      ChoosePlotDataMenu(),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      ChoosePlotDataMenu(),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      // ChoosePlotData(),
+                                      // SizedBox(
+                                      //  width: 10,
+                                      //  ),
+                                    ],
+                                  )
+                                : const SizedBox(),
+                            Stack(
+                              children: [
+                                CustomPaint(
+                                  size: Size(constraints.maxWidth,
+                                      constraints.maxHeight),
+                                  painter:
+                                      GPSMapPainter(screenPoints, gpsPoints, ref),
+                                ),
+                                Positioned(
+                                    left: 5,
+                                    bottom: 0,
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          constraints.maxWidth < 200
+                                              ? // display venu
+                                              widget.parsedFilename
+                                              : '',
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 13),
+                                        ),
+                                      ],
+                                    )),
+                                Positioned(
+                                    right: 20,
+                                    bottom: 20,
+                                    child: Column(
+                                      children: [
+                                        constraints.maxHeight > 700
+                                            ? Text(
+                                                curserModifierSet
+                                                    ? // display venu
+                                                    'Fast curser mode on, press spacebar to reset'
+                                                    : '',
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 16),
+                                              )
+                                            : const Text('')
+                                      ],
+                                    )),
+                                //    Positioned(
+                                // left: 20,
+                                // top: 20,
+                                // child: Column(
+                                //   children: [
+                                //     constraints.maxWidth > 200
+                                //         ? const ChoosePlotData()
+                                //         : const SizedBox.shrink(),
+                                //   ],
+                                // )),
+                              ],
                             ),
-                            Positioned(
-                                left: 5,
-                                bottom: 0,
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      constraints.maxWidth < 200
-                                          ? // display venu
-                                          widget.parsedFilename
-                                          : '',
-                                      style: const TextStyle(
-                                          color: Colors.white, fontSize: 13),
-                                    ),
-                                  ],
-                                )),
-                            Positioned(
-                                right: 20,
-                                bottom: 20,
-                                child: Column(
-                                  children: [
-                                    constraints.maxWidth > 200
-                                        ? Text(
-                                            curserModifierSet
-                                                ? // display venu
-                                                'Fast curser mode on, press spacebar to reset'
-                                                : '',
-                                            style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16),
-                                          )
-                                        : const Text('')
-                                  ],
-                                )),
                           ],
                         ),
                       ),
@@ -371,11 +403,13 @@ class GPSMapState extends ConsumerState<GPSMap> {
             .reduce((a, b) => a.value['speed'] > b.value['speed'] ? a : b)
             .key;
 
-    final maxSpeed = gpsPoints.map((p) => p['speed']).reduce((a, b) => a > b ? a : b);
+    final maxSpeed =
+        gpsPoints.map((p) => p['speed']).reduce((a, b) => a > b ? a : b);
 
     //final rpmData = ref.watch(dataLogProvider.notifier).allData;
-    final maxRpm = gpsPoints.map((p) => p['rpm']).reduce((a, b) => a > b ? a : b);
-print('maxRpm: $maxRpm');
+    final maxRpm =
+        gpsPoints.map((p) => p['rpm']).reduce((a, b) => a > b ? a : b);
+    print('maxRpm: $maxRpm');
     // Set the initial tap position and info
     setState(() {
       // ref.read(currentTimeStampProvider.notifier).setScreenPositionTimeStamp(
@@ -385,7 +419,7 @@ print('maxRpm: $maxRpm');
           maxSpeed); // set max speed in a provider, use in other screens, eg scale axis in graphs, set curser positions?
 
       ref.read(maxValueProvider.notifier).setMaxRpmValue(
-             maxRpm); // set max rpm in a provider, use in other screens,eg scale axis in graphs
+          maxRpm); // set max rpm in a provider, use in other screens,eg scale axis in graphs
     });
   }
 }

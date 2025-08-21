@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ble1/data_logger/ble_folder/screens/scan_screen.dart';
-import 'package:ble1/data_logger/log_viewer/open_existing_datalogs.dart';
+import 'package:ble1/data_logger/log_viewer/graph_screens/open_existing_datalogs.dart';
 
 
 
@@ -12,82 +12,91 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Column(
-        
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SingleChildScrollView(
-            child: SizedBox(
-              height: 10,
+     var screenSize = MediaQuery.of(context).size;
+    return  Scaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            screenSize.height > 400 ?
+            const SizedBox(
+              height: 200,
+            ):
+
+
+              const SizedBox(
+                    height: 20,
+                  ),
+            
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 20,),
+                      Text(
+                        'JT Electronics Data Logger  ',
+                        style: TextStyle(
+                            color: Color.fromARGB(255, 249, 249, 250),
+                            fontSize: 26),
+                      ),
+                      //   SizedBox(
+                      //   height: 40,
+                      // ),
+                      Icon(
+                        Icons.bluetooth,
+                        size: 30,
+                        color: Color.fromARGB(255, 196, 193, 193),
+                      ),
+                    ],
+                  ),
+                  // SizedBox(
+                  //   height: 10,
+                  // ),
+                   const Text(
+                    'www.jtmc.co.uk',
+                    style: TextStyle(color: Colors.blue),
+                  ),
+                  screenSize.height > 400 ?
+                  const SizedBox(
+                    height: 50,
+                  ):
+                  const SizedBox(height: 10,),
+                  const HomePageButton(
+                    title: 'Download Data Logs',
+                    page: ScanScreen(selectPage: 'downloadScreen',),
+                  ),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  const HomePageButton(
+                    title: 'Open Existings Data Logs',
+                    page: ListSavedFiles(),
+                  ),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  const HomePageButton(
+                    title: 'Logger Settings',
+                  //  page: Settings(),
+                   page: ScanScreen(selectPage: 'settingsScreen',),
+                  ),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  const HomePageButton(title: 'ToolBox',
+                  page: TestPage(),),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                ],
+              ),
             ),
-          ),
-    
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 20,),
-                    Text(
-                      'JT Electronics Data Logger  ',
-                      style: TextStyle(
-                          color: Color.fromARGB(255, 249, 249, 250),
-                          fontSize: 26),
-                    ),
-                    //   SizedBox(
-                    //   height: 40,
-                    // ),
-                    Icon(
-                      Icons.bluetooth,
-                      size: 30,
-                      color: Color.fromARGB(255, 196, 193, 193),
-                    ),
-                  ],
-                ),
-                // SizedBox(
-                //   height: 10,
-                // ),
-                 Text(
-                  'www.jtmc.co.uk',
-                  style: TextStyle(color: Colors.blue),
-                ),
-                SizedBox(
-                  height: 50,
-                ),
-                HomePageButton(
-                  title: 'Download Data Logs',
-                  page: ScanScreen(selectPage: 'downloadScreen',),
-                ),
-                SizedBox(
-                  height: 30,
-                ),
-                HomePageButton(
-                  title: 'Open Existings Data Logs',
-                  page: ListSavedFiles(),
-                ),
-                SizedBox(
-                  height: 30,
-                ),
-                HomePageButton(
-                  title: 'Logger Settings',
-                //  page: Settings(),
-                 page: ScanScreen(selectPage: 'settingsScreen',),
-                ),
-                SizedBox(
-                  height: 30,
-                ),
-                HomePageButton(title: 'ToolBox',
-                page: TestPage(),),
-                SizedBox(
-                  height: 30,
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

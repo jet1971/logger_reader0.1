@@ -83,13 +83,17 @@ class _ScanScreenState extends State<ScanScreen> {
             .contains(targetServiceUUID);
       }).toList();
 
-      // Automatically connect to the first device that has the service
-      if (filteredDevices.isNotEmpty && !_hasNavigated) {
-        _hasNavigated = true; // Set this flag to prevent repeated navigation
-        FlutterBluePlus
-            .stopScan(); // Stop the scan once we find a matching device
-        onConnectPressed(filteredDevices.first.device);
-      }
+      _scanResults = filteredDevices;  // Update the scan results with filtered devices (MODIFIED 7/8/2025)
+
+//--------------------------------------------------------------------------------------------
+      // // Automatically connect to the first device that has the service
+      // if (filteredDevices.isNotEmpty && !_hasNavigated) {
+      //   _hasNavigated = true; // Set this flag to prevent repeated navigation    (MODIFIED 7/8/2025)
+      //   FlutterBluePlus
+      //       .stopScan(); // Stop the scan once we find a matching device
+      //   onConnectPressed(filteredDevices.first.device);
+      // }
+//--------------------------------------------------------------------------------------------
 
       _scanResults = results;
       if (mounted) {
@@ -124,6 +128,8 @@ class _ScanScreenState extends State<ScanScreen> {
 
       await FlutterBluePlus.startScan(
         timeout: const Duration(seconds: 5),
+        androidScanMode: AndroidScanMode.lowLatency, // Use low latency for faster scanning for android
+
         withServices: [targetServiceUUID], // Filter by the target service UUID
       );
     } catch (e) {
@@ -306,9 +312,17 @@ class _ScanScreenState extends State<ScanScreen> {
             children: <Widget>[
               ..._buildSystemDeviceTiles(context),
               ..._buildScanResultTiles(context),
+              if (_scanResults.isEmpty && _systemDevices.isEmpty)       // Show a message when no devices are found
+                const Center(
+                  child: Text(
+                    'No Data Loggers found',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ),                                                      // Show a message when no devices are found 
             ],
           ),
         ),
+        
         floatingActionButton: buildScanButton(context),
       ),
     );

@@ -261,7 +261,7 @@ class _ChooseLogDownloadState extends ConsumerState<ChooseLogDownload> {
             SizedBox(
               width: 200,
               child: Text(
-                'Logger storage used: 20 %',
+                'Logger storage used: Soon... %',
                 //  serverFileListProvided[0].fastestLap, // dicking about
               ),
             )

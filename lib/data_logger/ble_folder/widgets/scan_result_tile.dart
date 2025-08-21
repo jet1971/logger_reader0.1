@@ -114,7 +114,7 @@ class _ScanResultTileState extends State<ScanResultTile> {
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
-                  ?.apply(color: Colors.black),
+                  ?.apply(color: Colors.white),
               softWrap: true,
             ),
           ),

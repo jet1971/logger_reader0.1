@@ -12,6 +12,7 @@ class LocalFileListNotifier extends StateNotifier<List<String>> {
       // Get the path to the documents directory
       final directory = await getApplicationDocumentsDirectory();
       final dir = Directory(directory.path);
+      print("Directory path: ${dir.path}");
 
       // Check if the directory exists
       if (await dir.exists()) {

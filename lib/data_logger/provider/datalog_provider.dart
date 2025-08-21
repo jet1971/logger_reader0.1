@@ -135,7 +135,7 @@ class DataLogProvider extends StateNotifier<Uint8List> {
         'tps': tps.toDouble(),
         'afr': modAfr,
         'airboxPressure': modAirBoxPressure,
-        'airTemperature': airTemperature,
+        'airTemperature': airTemperature.toDouble(),
         'coolantTemperature': coolantTemperature.toDouble(),
         'oilPressure': oilPressure,
         'batteryVoltage': modBatteryVoltage,

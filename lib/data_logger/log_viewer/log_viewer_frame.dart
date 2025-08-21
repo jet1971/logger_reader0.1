@@ -1,12 +1,12 @@
-import 'package:ble1/data_logger/log_viewer/engine_data_graph.dart';
+import 'package:ble1/data_logger/log_viewer/graph_screens/engine_data_graph.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/logger_first_screen.dart';
-import 'package:ble1/data_logger/log_viewer/sync_line_chart.dart';
+import 'package:ble1/data_logger/log_viewer/graph_screens/sync_line_chart.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/debug.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/sideBar/side_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:ble1/util/responsive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ble1/data_logger/provider/chosen_content_provider.dart';
+import 'package:ble1/data_logger/provider/chosen_screen_provider.dart';
 
 class LogViewerFrame extends ConsumerWidget {
   const LogViewerFrame({
@@ -18,16 +18,16 @@ class LogViewerFrame extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = Responsive.isDesktop(context);
-    final chosenContent = ref.watch(chosenContentProvider);
+    final chosenScreen = ref.watch(chosenScreenProvider);
 
     Widget mainContent;
-    if (chosenContent == 'track_report') {
+    if (chosenScreen == 'track_report') {
       mainContent = const LoggerFirstScreen();
-    } else if (chosenContent == 'engine_data') {
+    } else if (chosenScreen == 'engine_data') {
       mainContent = const EngineDataGraph();
-    } else if (chosenContent == 'suspension_data') {
+    } else if (chosenScreen == 'suspension_data') {
       mainContent =  const DebugWidget();
-    } else if (chosenContent == 'section_times') {
+    } else if (chosenScreen == 'section_times') {
       mainContent =  const SyncedLineChart();
     } 
     else {

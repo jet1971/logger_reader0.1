@@ -1,13 +1,15 @@
+import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/choose_gps_plot_data_menu.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/sideBar/choose_lap_menu.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/sideBar/side_bar_values.dart';
 import 'package:flutter/material.dart';
 import 'package:ble1/const/constant.dart';
-import 'package:ble1/data_logger/log_viewer/widgets/sideBar/choose_data_category_menu.dart';
+import 'package:ble1/data_logger/log_viewer/widgets/sideBar/choose_screen_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/local_file_list_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/logger_first_screen.dart';
+import 'package:ble1/data_logger/provider/chosen_screen_provider.dart';
 
 class SideBar extends ConsumerStatefulWidget {
   const SideBar({
@@ -34,6 +36,8 @@ class _SideMenuState extends ConsumerState<SideBar> {
     });
   }
 
+  String? selectedMenu;
+
   @override
   Widget build(BuildContext context) {
     final providerLocalFileList = ref.watch(localFileListProvider);
@@ -42,8 +46,11 @@ class _SideMenuState extends ConsumerState<SideBar> {
         .map((filePath) => path.basename(filePath))
         .contains(widget.fileName);
 
+    selectedMenu = ref.watch(chosenScreenProvider);
+    print(selectedMenu);
+
     return SingleChildScrollView(
-     // physics: FixedExtentScrollPhysics(parent: ClampingScrollPhysics()),
+      // physics: FixedExtentScrollPhysics(parent: ClampingScrollPhysics()),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
@@ -53,7 +60,7 @@ class _SideMenuState extends ConsumerState<SideBar> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(28,30,28,0),
+                  padding: const EdgeInsets.fromLTRB(28, 30, 28, 0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -70,9 +77,11 @@ class _SideMenuState extends ConsumerState<SideBar> {
                         onPressed: isSaved
                             ? null
                             : () {
-                                ref                                     // save to local storage
-                                    .read(dataLogProvider.notifier) // dataLogProvider is the provider
-                                    .saveData(widget.fileName, ref); // ref is the widget reference
+                                ref // save to local storage
+                                    .read(dataLogProvider
+                                        .notifier) // dataLogProvider is the provider
+                                    .saveData(widget.fileName,
+                                        ref); // ref is the widget reference
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
@@ -119,7 +128,7 @@ class _SideMenuState extends ConsumerState<SideBar> {
                     ],
                   ),
                 ),
-                
+
                 const ChooseScreenMenu(),
                 const SizedBox(
                   height: 20,
@@ -133,18 +142,41 @@ class _SideMenuState extends ConsumerState<SideBar> {
                 const SizedBox(
                   height: 20,
                 ),
-                Container(
-                  width: 220,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: const Color(0xFF21222D),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(12.0),
-                    child: LoggerFirstScreen(),
-                  ),
-                ),
+                selectedMenu !=
+                        'track_report' // this section removes the small track plot in the side bar if the main screen is the plot, no point in having it twice
+                    ? Container(
+                        width: 220,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: const Color(0xFF21222D),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: LoggerFirstScreen(),
+                        ),
+                      )
+                    : Container(
+                        width: 220,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: const Color(0xFF21222D),
+                        ),
+                        child: const Column(
+                          children: [
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              'Choose Plot Data',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            ChoosePlotDataMenu(),
+                          ],
+                        ),
+                      ),
+
                 const SizedBox(
                   height: 30,
                 )

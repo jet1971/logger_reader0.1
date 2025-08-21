@@ -80,7 +80,7 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
   }
 
 //-----------------------------------------------------------------------------------------------------
- String formatTime(String time) {
+  String formatTime(String time) {
     String hour = time.substring(0, 2); // First 2 characters are the hour
     String mins = time.substring(2, 4); // Characters 2-4 are the minutes
     return '$hour:$mins';
@@ -89,7 +89,6 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
 
   @override
   Widget build(BuildContext context) {
-
     var screenSize = MediaQuery.of(context).size;
 
     final providerLocalFileList = ref.watch(localFileListProvider);
@@ -177,78 +176,22 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Row(
-          children: [
-            screenSize.width > 670
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 150,
-                        child: Text(
-                          widget.serverInfo.venue,
-                          style: const TextStyle(
-                              color: Colors.blue,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            widget.serverInfo.day,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const Text(
-                            "/",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            widget.serverInfo.month,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const Text(
-                            "/",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            widget.serverInfo.year,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )
-
-                //                  Screeen less than 860px
-                //-------------------------------------------------------------------------------------
-                : SizedBox(
-                    width: 100, // used to keep track name aligned
-                    child: Column(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: screenSize.width > 870
+              ? Row(
+                  children: [
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.serverInfo.venue,
-                          style: const TextStyle(
-                              color: Colors.blue,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold),
+                        SizedBox(
+                          width: 150,
+                          child: Text(
+                            widget.serverInfo.venue,
+                            style: const TextStyle(
+                                color: Colors.blue,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                         Row(
                           children: [
@@ -291,106 +234,260 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
                         ),
                       ],
                     ),
-                  ),
-            const SizedBox(
-              width: 15,
-            ),
-                SizedBox(
-              width: 70,
-              child: Text(
-                widget.serverInfo.id,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-            SizedBox(
-              width: 70,
-              child: Text(
-                formatTime(widget.serverInfo.time),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            const Text(
-              'Fastest Lap:  ',
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(
-              width: 120,
-              child: Text(
-                formatMilliseconds(int.tryParse(widget.serverInfo.fastestLap) ?? 0),
-               
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.normal),
-              ),
-            ),
-            const SizedBox(
-              width: 10,
-            ),
-            const Text(
-              'File size: ',
-              style: TextStyle(color: Colors.white),
-            ),
-            Text(
-              widget.serverInfo.fileSize,
-              style: const TextStyle(color: Colors.white),
-            ),
-            const Spacer(),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.green),
-              child: saved
-                  ? const Text(
-                      'SAVED / OPEN',
-                    )
-                  : const Text(
-                      'DOWNLOAD',
-                      style: TextStyle(color: Colors.blue),
+                    const SizedBox(
+                      width: 15,
                     ),
-              onPressed: () async {
-                if (saved) {
-                  // Load data before navigation
-                  ref
-                      .read(filenameProvider.notifier)
-                      .setFileName(widget.serverInfo.fileName);
-                  await loadData(widget.serverInfo.fileName, ref);
-
-                  if (!context.mounted) return;
-
-                  // Perform navigation after loading data
-                  Navigator.of(context)
-                      .push(
-                    MaterialPageRoute(
-                      builder: (context) => LogViewerFrame(
-                        fileName: widget.serverInfo.fileName,
+                    SizedBox(
+                      width: 70,
+                      child: Text(
+                        widget.serverInfo.id,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
-                  )
-                      .then((_) {
-                    // Optional: Call setState if needed after navigating back
-                    setState(() {});
-                  });
-                } else {
-                  // Handle downloading the file
-                  widget.downloadFileFunction();
-                }
-              },
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
-              onPressed: () {
-                showMyDialog();
-              },
-              child: const Text('DELETE'),
-            )
-          ],
-        ),
-      ),
+                    SizedBox(
+                      width: 70,
+                      child: Text(
+                        formatTime(widget.serverInfo.time),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const Text(
+                      'Fastest Lap:  ',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    SizedBox(
+                      width: 120,
+                      child: Text(
+                        formatMilliseconds(
+                            int.tryParse(widget.serverInfo.fastestLap) ?? 0),
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.normal),
+                      ),
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    const Text(
+                      'File size: ',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      widget.serverInfo.fileSize,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      style:
+                          TextButton.styleFrom(foregroundColor: Colors.green),
+                      child: saved
+                          ? const Text(
+                              'SAVED / OPEN',
+                            )
+                          : const Text(
+                              'DOWNLOAD',
+                              style: TextStyle(color: Colors.blue),
+                            ),
+                      onPressed: () async {
+                        if (saved) {
+                          // Load data before navigation
+                          ref
+                              .read(filenameProvider.notifier)
+                              .setFileName(widget.serverInfo.fileName);
+                          await loadData(widget.serverInfo.fileName, ref);
+
+                          if (!context.mounted) return;
+
+                          // Perform navigation after loading data
+                          Navigator.of(context)
+                              .push(
+                            MaterialPageRoute(
+                              builder: (context) => LogViewerFrame(
+                                fileName: widget.serverInfo.fileName,
+                              ),
+                            ),
+                          )
+                              .then((_) {
+                            // Optional: Call setState if needed after navigating back
+                            setState(() {});
+                          });
+                        } else {
+                          // Handle downloading the file
+                          widget.downloadFileFunction();
+                        }
+                      },
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red,
+                      ),
+                      onPressed: () {
+                        showMyDialog();
+                      },
+                      child: const Text('DELETE'),
+                    )
+                  ],
+                )
+              : Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 150,
+                          child: Text(
+                            widget.serverInfo.venue,
+                            style: const TextStyle(
+                                color: Colors.blue,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              widget.serverInfo.day,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const Text(
+                              "/",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              widget.serverInfo.month,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const Text(
+                              "/",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              widget.serverInfo.year,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      width: 15,
+                    ),
+                    SizedBox(
+                      width: 90,
+                      child: Text(
+                        widget.serverInfo.id,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 90,
+                      child: Text(
+                        formatTime(widget.serverInfo.time),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    // const Text(
+                    //   'Fastest Lap:  ',
+                    //   style: TextStyle(color: Colors.white),
+                    // ),
+                    // SizedBox(
+                    //   width: 120,
+                    //   child: Text(
+                    //     formatMilliseconds(
+                    //         int.tryParse(widget.serverInfo.fastestLap) ?? 0),
+                    //     style: const TextStyle(
+                    //         color: Colors.white, fontWeight: FontWeight.normal),
+                    //   ),
+                    // ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    const Text(
+                      'File size: ',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      widget.serverInfo.fileSize,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      style:
+                          TextButton.styleFrom(foregroundColor: Colors.green),
+                      child: saved
+                          ? const Text(
+                              'SAVED / OPEN',
+                            )
+                          : const Text(
+                              'DOWNLOAD',
+                              style: TextStyle(color: Colors.blue),
+                            ),
+                      onPressed: () async {
+                        if (saved) {
+                          // Load data before navigation
+                          ref
+                              .read(filenameProvider.notifier)
+                              .setFileName(widget.serverInfo.fileName);
+                          await loadData(widget.serverInfo.fileName, ref);
+
+                          if (!context.mounted) return;
+
+                          // Perform navigation after loading data
+                          Navigator.of(context)
+                              .push(
+                            MaterialPageRoute(
+                              builder: (context) => LogViewerFrame(
+                                fileName: widget.serverInfo.fileName,
+                              ),
+                            ),
+                          )
+                              .then((_) {
+                            // Optional: Call setState if needed after navigating back
+                            setState(() {});
+                          });
+                        } else {
+                          // Handle downloading the file
+                          widget.downloadFileFunction();
+                        }
+                      },
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red,
+                      ),
+                      onPressed: () {
+                        showMyDialog();
+                      },
+                      child: const Text('DELETE'),
+                    )
+                  ],
+                )),
     );
   }
 }
