@@ -1,29 +1,114 @@
 // Copyright 2017-2023, Charles Weinberger & Paul DeMarco.
 // All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-
+import 'data_logger/ble_folder/screens/bluetooth_off_screen.dart';
 import 'dart:async';
+import 'package:ble1/data_logger/provider/note_provider.dart';
 import 'package:ble1/home.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'data_logger/ble_folder/screens/bluetooth_off_screen.dart';
-import 'data_logger/ble_folder/screens/scan_screen.dart';
 
+import 'data_logger/ble_folder/screens/scan_screen.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+//import 'package:ble1/data_logger/log_viewer/widgets/sideBar/notes/models/note_database.dart';
+import 'package:ble1/data_logger/log_viewer/widgets/sideBar/isar_database_stuff/models/venue_model.dart';
+
+
+// final colorScheme = ColorScheme.fromSeed(
+//   brightness: Brightness.dark,
+//   seedColor: const Color.fromARGB(255, 102, 6, 247),
+//   surface: const Color.fromARGB(255, 56, 49, 66),
+// );
+
+// final theme = ThemeData().copyWith(
+//   scaffoldBackgroundColor: colorScheme.surface,
+//   colorScheme: colorScheme,
+
+// );
+
+// final colorScheme = ColorScheme.fromSeed(
+//   brightness: Brightness.dark,
+//   seedColor: const Color.fromARGB(255, 102, 6, 247),
+//   surface: const Color.fromARGB(255, 56, 49, 66),
+
+// );
+
+// final theme = ThemeData(
+
+//   useMaterial3: true, // be explicit
+//   colorScheme: colorScheme,
+// ).copyWith(
+
+//   scaffoldBackgroundColor: colorScheme.surface,
+//   dialogTheme: const DialogThemeData(
+//     backgroundColor: Colors.white,
+//     surfaceTintColor: Colors.transparent,
+//   ),
+// );
 
 final colorScheme = ColorScheme.fromSeed(
-  brightness: Brightness.dark,
+  brightness: Brightness.dark, // keep app dark overall
   seedColor: const Color.fromARGB(255, 102, 6, 247),
   surface: const Color.fromARGB(255, 56, 49, 66),
 );
 
-final theme = ThemeData().copyWith(
-  scaffoldBackgroundColor: colorScheme.surface,
+final theme = ThemeData(
+  useMaterial3: true,
   colorScheme: colorScheme,
-  // textTheme: GoogleFonts.ubuntuCondensedTextTheme().copyWith(
-  //   titleSmall: GoogleFonts.ubuntuCondensed(
-  //     fontWeight: FontWeight.bold,
+  scaffoldBackgroundColor: colorScheme.surface,
+
+  // 👇 global dialog styling
+  dialogTheme: const DialogThemeData(
+    backgroundColor: Colors.white,
+    surfaceTintColor: Colors.transparent,
+    titleTextStyle: TextStyle(
+      color: Colors.black,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+    ),
+    contentTextStyle: TextStyle(
+      color: Colors.black,
+      fontSize: 16,
+    ),
+  ),
+
+  // 👇 make TextFields inside dialogs black-on-white
+  inputDecorationTheme: const InputDecorationTheme(
+    filled: true,
+    fillColor: Colors.white,
+    labelStyle: TextStyle(color: Colors.black87),
+    hintStyle: TextStyle(color: Colors.black54),
+    prefixStyle: TextStyle(color: Colors.black87),
+    suffixStyle: TextStyle(color: Colors.black87),
+    iconColor: Colors.black87,
+    prefixIconColor: Colors.black87,
+    suffixIconColor: Colors.black87,
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.black38),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.black87, width: 1.5),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.red),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.red, width: 1.5),
+    ),
+  ),
+
+  // 👇 cursor + selection inside TextFields
+  textSelectionTheme: const TextSelectionThemeData(
+    cursorColor: Colors.black,
+    selectionColor: Color(0x33000000),
+    selectionHandleColor: Colors.black,
+  ),
 );
+
+// textTheme: GoogleFonts.ubuntuCondensedTextTheme().copyWith(
+//   titleSmall: GoogleFonts.ubuntuCondensed(
+//     fontWeight: FontWeight.bold,
+//);
 // titleMedium: GoogleFonts.ubuntuCondensed(
 //   fontWeight: FontWeight.bold,
 //   fontSize: 18,
@@ -32,19 +117,28 @@ final theme = ThemeData().copyWith(
 //   fontWeight: FontWeight.bold,
 // ),
 
-void main() {
+// Define a provider for NoteDatabase
+// final noteDatabaseProvider = Provider<NoteDatabase>((ref) {
+//   return NoteDatabase();
+// });
+
+void main() async {
   FlutterBluePlus.setLogLevel(LogLevel.info, color: true);
   WidgetsFlutterBinding.ensureInitialized();
+  final isar = await initializeIsar();
 
-  runApp(ProviderScope(
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: theme,
-
-      home: const Home(),
-      //  home: const FlutterBlueApp(),
+  runApp(
+    ProviderScope(
+      overrides: [
+        isarProvider.overrideWithValue(isar),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: theme,
+        home: const Home(),
+      ),
     ),
-  ));
+  );
 }
 
 // This widget shows BluetoothOffScreen or

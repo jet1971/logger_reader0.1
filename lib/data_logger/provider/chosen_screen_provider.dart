@@ -9,7 +9,20 @@ class ChosenScreenProvider extends StateNotifier<String?> {
   }
 }
 
-final chosenScreenProvider =
-    StateNotifierProvider<ChosenScreenProvider, String?>((ref) {
-  return ChosenScreenProvider();
-});
+// final chosenScreenProvider = StateNotifierProvider<ChosenScreenProvider, String?>((ref) {
+//   return ChosenScreenProvider();
+// });
+
+
+final chosenScreenProvider = StateNotifierProvider<ChosenScreenNotifier, String>((ref) 
+=> ChosenScreenNotifier());
+
+class ChosenScreenNotifier extends StateNotifier<String> {
+  ChosenScreenNotifier() : super('track_report');
+
+  void setChosenScreen(String? id) {
+    if (id != null) {
+      state = id;
+    }
+  }
+}

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:ble1/util/responsive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ble1/data_logger/provider/chosen_screen_provider.dart';
+import 'package:ble1/data_logger/log_viewer/graph_screens/zoom_graph_1.dart';
 
 class LogViewerFrame extends ConsumerWidget {
   const LogViewerFrame({
@@ -26,11 +27,12 @@ class LogViewerFrame extends ConsumerWidget {
     } else if (chosenScreen == 'engine_data') {
       mainContent = const EngineDataGraph();
     } else if (chosenScreen == 'suspension_data') {
-      mainContent =  const DebugWidget();
+      mainContent = const DebugWidget();
+    } else if (chosenScreen == 'zoom_graph') {
+      mainContent = const ZoomedGraphs();
     } else if (chosenScreen == 'section_times') {
-      mainContent =  const SyncedLineChart();
-    } 
-    else {
+      mainContent = const SyncedLineChart();
+    } else {
       mainContent = const LoggerFirstScreen();
     }
 
@@ -54,14 +56,15 @@ class LogViewerFrame extends ConsumerWidget {
               Expanded(
                 flex: 2,
                 child: SizedBox(
-                  child: SideBar(                      // SideMenuWidget(),
+                  child: SideBar(
+                    // SideMenuWidget(),
                     fileName: fileName,
                   ),
                 ),
               ),
             Expanded(
               flex: 8,
-              child: mainContent,                       //  mainContent,
+              child: mainContent, //  mainContent,
 
               // LoggerFirstScreen(fileName: fileName,),
 

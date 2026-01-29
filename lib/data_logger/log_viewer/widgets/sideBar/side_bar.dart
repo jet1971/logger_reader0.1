@@ -1,5 +1,6 @@
 import 'package:ble1/data_logger/log_viewer/widgets/gps_plot/choose_gps_plot_data_menu.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/sideBar/choose_lap_menu.dart';
+import 'package:ble1/data_logger/log_viewer/widgets/sideBar/isar_database_stuff/notes.dart';
 import 'package:ble1/data_logger/log_viewer/widgets/sideBar/side_bar_values.dart';
 import 'package:flutter/material.dart';
 import 'package:ble1/const/constant.dart';
@@ -58,6 +59,7 @@ class _SideMenuState extends ConsumerState<SideBar> {
             //  padding: const EdgeInsets.symmetric(vertical: 30),
             color: const Color(0xFF171821),
             child: Column(
+            //  crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(28, 30, 28, 0),
@@ -137,6 +139,40 @@ class _SideMenuState extends ConsumerState<SideBar> {
                 const SizedBox(
                   height: 20,
                 ),
+                Row(mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                    InkWell(
+                      onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                        builder: (context) =>  NotesForm(fileName: widget.fileName,),
+                        ),
+                      );
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Row(
+                      children: [
+                        Text(
+                        '   Notes',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(
+                        Icons.edit_document,
+                        color: Colors.white,
+                        size: 26,
+                        ),
+                      ],
+                      ),
+                    ),
+                    ],
+                ),
+              
+                    SizedBox(height: 20,),
                 const SideBarValues(),
                 // Placeholder(),
                 const SizedBox(
@@ -172,7 +208,7 @@ class _SideMenuState extends ConsumerState<SideBar> {
                               'Choose Plot Data',
                               style: TextStyle(color: Colors.white),
                             ),
-                            ChoosePlotDataMenu(),
+                            ChoosePlotDataMenu(), // menu to choose gps data to plot, speed, temperature, etc
                           ],
                         ),
                       ),

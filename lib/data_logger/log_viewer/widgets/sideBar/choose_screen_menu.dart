@@ -15,6 +15,7 @@ List<MenuItem> menuItems = [
   MenuItem('track_report', 'Track Report', Icons.flag),
   MenuItem('engine_data', 'Engine', Icons.speed_sharp),
   MenuItem('suspension_data', 'Debug/Raw', Icons.data_object),
+  MenuItem('zoom_graph', 'Zoom_Temp', Icons.zoom_in),
   MenuItem('section_times', 'Linked Graphs', Icons.speed_sharp),
 ];
 

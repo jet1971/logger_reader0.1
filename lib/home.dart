@@ -4,9 +4,6 @@ import 'package:ble1/data_logger/log_viewer/graph_screens/open_existing_datalogs
 
 
 
-import 'package:ble1/temp.dart';
-
-
 class Home extends StatelessWidget {
   const Home({super.key});
 
@@ -88,7 +85,9 @@ class Home extends StatelessWidget {
                     height: 30,
                   ),
                   const HomePageButton(title: 'ToolBox',
-                  page: TestPage(),),
+                   page: ScanScreen(selectPage: 'quickShifterSetup',
+                    ),
+                  ),
                   const SizedBox(
                     height: 30,
                   ),

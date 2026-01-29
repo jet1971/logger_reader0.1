@@ -2,6 +2,8 @@
 
 import 'dart:async';
 import 'package:ble1/settings/settings.dart';
+import 'package:ble1/temp.dart';
+import 'package:ble1/temp2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:ble1/data_logger/server_folder/choose_datalog_download.dart';
@@ -9,6 +11,7 @@ import 'device_screen.dart';
 import '../utils/snackbar.dart';
 import '../widgets/system_device_tile.dart';
 import '../widgets/scan_result_tile.dart';
+import 'package:flutter/services.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key, this.selectPage});
@@ -83,7 +86,8 @@ class _ScanScreenState extends State<ScanScreen> {
             .contains(targetServiceUUID);
       }).toList();
 
-      _scanResults = filteredDevices;  // Update the scan results with filtered devices (MODIFIED 7/8/2025)
+      _scanResults =
+          filteredDevices; // Update the scan results with filtered devices (MODIFIED 7/8/2025)
 
 //--------------------------------------------------------------------------------------------
       // // Automatically connect to the first device that has the service
@@ -128,7 +132,8 @@ class _ScanScreenState extends State<ScanScreen> {
 
       await FlutterBluePlus.startScan(
         timeout: const Duration(seconds: 5),
-        androidScanMode: AndroidScanMode.lowLatency, // Use low latency for faster scanning for android
+        androidScanMode: AndroidScanMode
+            .lowLatency, // Use low latency for faster scanning for android
 
         withServices: [targetServiceUUID], // Filter by the target service UUID
       );
@@ -176,6 +181,12 @@ class _ScanScreenState extends State<ScanScreen> {
       final Guid liveDataCharacteristicUUID = Guid('C00D');
       BluetoothCharacteristic? liveDataCharacteristic;
 
+      final Guid qsSettingsCharacteristicUUID = Guid('E00D');
+      BluetoothCharacteristic? qsSettingsCharacteristic;
+
+      final Guid qsLiveDataCharacteristicUUID = Guid('F00E');
+      BluetoothCharacteristic? qsLiveDataCharacteristic;
+
       for (BluetoothService service in services) {
         if (service.uuid == targetServiceUUID) {
           // Find the characteristic in the service
@@ -196,13 +207,22 @@ class _ScanScreenState extends State<ScanScreen> {
             } else if (characteristic.uuid == liveDataCharacteristicUUID) {
               liveDataCharacteristic = characteristic;
               print('Found Live Data Characteristic');
+            } else if (characteristic.uuid == qsSettingsCharacteristicUUID) {
+              qsSettingsCharacteristic = characteristic;
+              print('Found Quick Shifter Settings Characteristic');
+            } else if (characteristic.uuid == qsLiveDataCharacteristicUUID) {
+              qsLiveDataCharacteristic = characteristic;
+              print('Found Quick Shifter Live Data Characteristic');
+            } else {
               break;
             }
           }
           //--------------------------------------------------------------------------
           if (readFileDetailCharacteristic != null &&
               deleteFileCharacteristic != null &&
-              downloadFileCharacteristic != null) {
+              downloadFileCharacteristic != null &&
+              qsSettingsCharacteristic != null &&
+              qsLiveDataCharacteristic != null) {
             break; // Break out of the inner loop if both are found
           }
         }
@@ -234,6 +254,18 @@ class _ScanScreenState extends State<ScanScreen> {
                   Settings(
                 settingsCharacteristic: settingsCharacteristic!,
                 liveDataCharacteristic: liveDataCharacteristic!,
+              ),
+            ),
+          );
+        }
+      } else if (widget.selectPage == 'quickShifterSetup') {
+        if (qsSettingsCharacteristic != null && mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => //DeviceScreen(device: device)
+                  TestPage(
+                qsSettingsCharacteristic: qsSettingsCharacteristic!,
+                qsLiveDataCharacteristic: qsLiveDataCharacteristic!,
               ),
             ),
           );
@@ -300,6 +332,12 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     return ScaffoldMessenger(
       key: Snackbar.snackBarKeyB,
       child: Scaffold(
@@ -312,17 +350,18 @@ class _ScanScreenState extends State<ScanScreen> {
             children: <Widget>[
               ..._buildSystemDeviceTiles(context),
               ..._buildScanResultTiles(context),
-              if (_scanResults.isEmpty && _systemDevices.isEmpty)       // Show a message when no devices are found
+              if (_scanResults.isEmpty &&
+                  _systemDevices
+                      .isEmpty) // Show a message when no devices are found
                 const Center(
                   child: Text(
                     'No Data Loggers found',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
-                ),                                                      // Show a message when no devices are found 
+                ), // Show a message when no devices are found
             ],
           ),
         ),
-        
         floatingActionButton: buildScanButton(context),
       ),
     );

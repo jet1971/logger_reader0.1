@@ -1,6 +1,7 @@
 //ignore_for_file: avoid_print
 
 import 'package:ble1/data_logger/log_viewer/log_viewer_frame.dart';
+import 'package:ble1/data_logger/log_viewer/widgets/sideBar/isar_database_stuff/models/venue_model.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
@@ -10,6 +11,7 @@ import 'package:ble1/data_logger/provider/datalog_provider.dart';
 import 'package:ble1/data_logger/provider/local_file_list_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ble1/data_logger/provider/filename_provider.dart';
+import 'package:isar/isar.dart';
 
 class ListSavedFiles extends ConsumerStatefulWidget {
   const ListSavedFiles({super.key});
@@ -19,18 +21,19 @@ class ListSavedFiles extends ConsumerStatefulWidget {
 }
 
 class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
-  // final GlobalKey<AnimatedListState> _listKey =
-  //     GlobalKey<AnimatedListState>(); // Key to control AnimatedList
-
-  //String fileContents = '';
   Uint8List fileContents = Uint8List(0);
+  List<VenueModel> venueList = [];
 
   @override
   void initState() {
     super.initState();
-    // Load the local file list when the widget is initialized
-    Future.microtask(() {
+    Future.microtask(() async {
       ref.read(localFileListProvider.notifier).loadLocalFileList();
+      final isar = Isar.getInstance();
+      final result = await isar?.venueModels.where().findAll();
+      setState(() {
+        venueList = result!;
+      });
     });
   }
 
@@ -60,7 +63,7 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
     }
   }
 
-    //-----------------------------------------------------------------------------------------------------
+  //-----------------------------------------------------------------------------------------------------
 
   String formatMilliseconds(int milliseconds) {
     // Calculate minutes, seconds, and remaining milliseconds
@@ -76,13 +79,19 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
   }
 
 //-----------------------------------------------------------------------------------------------------
+ 
   String formatTime(String time) {
-    String hour = time.substring(0, 2); // First 2 characters are the hour
-    String mins = time.substring(2, 4); // Characters 2-4 are the minutes
+    if (time.length < 4) {
+      print("⚠️ Invalid time string: '$time'");
+      return "--:--";
+    }
+
+    String hour = time.substring(0, 2);
+    String mins = time.substring(2, 4);
     return '$hour:$mins';
   }
-//-----------------------------------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -112,32 +121,16 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
 
                 // Ensure txtPos is valid
                 if (txtPos == -1 || txtPos < 22) {
-                  print('Invalid filename format: $fileName');
-                  print('Invalid filename format: $filePath');
+                  print('Skipping invalid log filename format: $fileName');
+                  print('Skipping invalid log filename format: $filePath');
                   return const SizedBox.shrink(); // Skip processing this file
                 }
 
-                try {
-                  String day = fileName.substring(txtPos - 8, txtPos - 6); // Extract day
-                  String time = fileName.substring(txtPos - 12, txtPos - 8); // Extract time (HHMMSS)
-                  String fastestLap = fileName.substring(txtPos - 19, txtPos - 12); // Extract fastest lap time (HHMMSS)
-                  String version = fileName.substring(txtPos - 22, txtPos - 21);
 
-                  // Additional processing...
-                } catch (e) {
-                  print('Error processing filename: $fileName, Error: $e');
-                }
 
                 String id = fileName.substring(
                     1, txtPos - 22); // Extract ID from filename
-                    print(id);
-                
-  
-                String venue = "Venue N/A"; // Default value for venue
-                venue = fileName.substring(
-                    txtPos - 26,
-                    txtPos -
-                        25); // Extract venue initials, eg (cp = Cadwell Park), (na = not available)
+                print(id);
 
                 String year = fileName.substring(
                     txtPos - 4, txtPos); // Extract year (2024)
@@ -149,36 +142,29 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
                     txtPos - 12, txtPos - 8); // Extract time (HHMMSS)
                 // String fastestLap = fileName.substring(txtPos - 19,
                 //     txtPos - 12); // Extract fastest lap time (HHMMSS)
-                String fastestLap = fileName.substring(
-                    txtPos - 19, txtPos - 12); // Extract fastest lap time (HHMMSS)
-
+                String fastestLap = fileName.substring(txtPos - 19,
+                    txtPos - 12); // Extract fastest lap time (HHMMSS)
                 String version = fileName.substring(txtPos - 22, txtPos - 21);
 
-                if (venue == "1") {
-                  venue = 'Work';
-                } else if (venue == "2") {
-                  venue = 'Home';
-                } else if (venue == "3") {
-                  venue = 'Aintree';
-                } else if (venue == "4") {
-                  venue = 'Services';
-                } else if (venue == "5") {
-                  venue = 'Cadwell';
-                } else if (venue == "6") {
-                  venue = 'Oulton';
-                } else if (venue == "7") {
-                  venue = 'IOM';
-                } else if (venue == "8") {
-                  venue = 'Venue N/A';
-                } else if (venue == "9") {
-                  venue = 'Venue N/A';
-                } else if (venue == "0") {
-                  venue = 'Venue N/A';
-                }
-                 // print('printing from open_existing_datalogs_file $fileName');
-                 // print('printing from open_existing_datalogs_file $filePath');
+         
+                String venueName = "Unknown Venue";
+                //defensive check
+                if (fileName.length >= 30) {
+                  String venueCode =
+                      fileName.substring(txtPos - 26, txtPos - 25);
 
-                 Future<void> showMyDialog() async {
+                  for (final venue in venueList) {
+                    if (venue.code == venueCode) {
+                      venueName = venue.name;
+                      break;
+                    }
+                  }
+                }
+
+                // print('printing from open_existing_datalogs_file $fileName');
+                // print('printing from open_existing_datalogs_file $filePath');
+
+                Future<void> showMyDialog() async {
                   return showDialog<void>(
                     context: context,
                     barrierDismissible: true,
@@ -276,7 +262,7 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
                                   SizedBox(
                                     width: 150,
                                     child: Text(
-                                      venue,
+                                      venueName,
                                       style: const TextStyle(
                                           color: Colors.blue,
                                           fontSize: 16,
@@ -332,7 +318,7 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      venue,
+                                      venueName,
                                       style: const TextStyle(
                                           color: Colors.blue,
                                           fontSize: 14,
@@ -410,7 +396,8 @@ class ListSavedFilesState extends ConsumerState<ListSavedFiles> {
                         SizedBox(
                           width: 120,
                           child: Text(
-                            formatMilliseconds(int.parse(fastestLap)), // Format the fastest lap time(millis to HH:MM:SS)                
+                            formatMilliseconds(int.parse(
+                                fastestLap)), // Format the fastest lap time(millis to HH:MM:SS)
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold),

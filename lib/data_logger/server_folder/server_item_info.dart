@@ -80,11 +80,18 @@ class _ServerItemInfoState extends ConsumerState<ServerItemInfo> {
   }
 
 //-----------------------------------------------------------------------------------------------------
-  String formatTime(String time) {
-    String hour = time.substring(0, 2); // First 2 characters are the hour
-    String mins = time.substring(2, 4); // Characters 2-4 are the minutes
+
+String formatTime(String time) {
+    if (time.length < 4) {
+      print("⚠️ Invalid time string: '$time'");
+      return "--:--";
+    }
+
+    String hour = time.substring(0, 2);
+    String mins = time.substring(2, 4);
     return '$hour:$mins';
   }
+
 //-----------------------------------------------------------------------------------------------------
 
   @override

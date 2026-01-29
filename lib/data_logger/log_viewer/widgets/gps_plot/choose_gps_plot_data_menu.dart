@@ -73,6 +73,7 @@ class _ChoosePlotDataMenuState extends ConsumerState<ChoosePlotDataMenu> {
             selectedMenu = menu; // Update selected menu item
           });
           ref.read(chosenDataProvider.notifier).setChosenData(selectedMenu?.id);
+          
         },
         leadingIcon: selectedMenu != null
             ? Padding(
@@ -114,3 +115,16 @@ class _ChoosePlotDataMenuState extends ConsumerState<ChoosePlotDataMenu> {
     );
   }
 }
+
+// final chosenDataProvider = StateNotifierProvider<ChosenDataNotifier, String>(
+//     (ref) => ChosenDataNotifier());
+
+// class ChosenDataNotifier extends StateNotifier<String> {
+//   ChosenDataNotifier() : super('speed');
+
+//   void setChosenData(String? id) {
+//     if (id != null) {
+//       state = id;
+//     }
+//   }
+// }

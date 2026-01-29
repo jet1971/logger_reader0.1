@@ -96,4 +96,6 @@ class GPSMapPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return true;
   }
+  
 }
+

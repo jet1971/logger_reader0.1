@@ -1,278 +1,399 @@
-import 'dart:convert';
-
 import 'package:fl_chart/fl_chart.dart';
-
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ble1/data_logger/provider/datalog_provider.dart';
+import 'package:ble1/data_logger/provider/current_timestamp_provider.dart';
+import 'package:ble1/data_logger/provider/index_provider.dart';
+import 'package:ble1/data_logger/log_viewer/graph_screens/metric_line_chart.dart';
 
-class LineChartSample12 extends StatefulWidget {
-  const LineChartSample12({super.key});
-
-  @override
-  State<LineChartSample12> createState() => _LineChartSample12State();
+class RightArrowIntent extends Intent {
+  const RightArrowIntent();
 }
 
-class _LineChartSample12State extends State<LineChartSample12> {
-  List<(DateTime, double)>? _bitcoinPriceHistory;
+class LeftArrowIntent extends Intent {
+  const LeftArrowIntent();
+}
+
+const leftReservedSize = 52.0;
+int touchResponseTimestamp =
+    0; // Global variable to store the timestamp of the touch response
+bool curserModifierSet = true;
+int markerIndex = 0;
+
+List<FlSpot> _convertToSpotsWithFilter(List<Map<String, dynamic>> dataLog,
+    String dataName, String timestamp, double threshold) {
+  List<FlSpot> points = [];
+  String lastParsed = ''; // Store the last parsed values to prevent duplicates
+  double lastValidPoint = 0; // To hold the last valid point(rpm value)
+
+  for (int i = 0; i < dataLog.length; i++) {
+    String currentParsed =
+        "${(dataLog[i][dataName])},${(dataLog[i][timestamp])},";
+    // //  print('currentParsed $currentParsed');
+
+    // Check if any of the values are empty or invalid
+    if (dataLog[i][dataName] == null || dataLog[i][timestamp] == null) {
+      //    print("Skipping invalid data at index $i:}");
+      continue; // Skip to the next iteration
+    }
+
+    double data = (dataLog[i][dataName]);
+    int elapsedTime = (dataLog[i][timestamp]);
+
+    if (points.isEmpty) {
+      lastValidPoint = data;
+      points.add(FlSpot(elapsedTime.toDouble(), data));
+      lastParsed = currentParsed;
+    } else {
+      double difference = (data - lastValidPoint).abs();
+      if (difference <= threshold) {
+        points.add(FlSpot(elapsedTime.toDouble(), data));
+        lastValidPoint = data;
+        lastParsed = currentParsed;
+      } else {
+        data = lastValidPoint;
+        points.add(FlSpot(elapsedTime.toDouble(), data));
+        print("Skipping... $difference");
+        print("last valid data was added as filler so chart aligns");
+      }
+    }
+  }
+  return points;
+}
+
+class ZoomedGraphs extends ConsumerStatefulWidget {
+  const ZoomedGraphs({super.key});
+
+  @override
+  ConsumerState<ZoomedGraphs> createState() => _ZoomedGraphsState();
+}
+
+class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
+  int touchIndex =
+      0; // Shared cursor position (used by both charts, and track plot)
+
+  final FocusNode focusNode =
+      FocusNode(); // Focus node for capturing keyboard events
+
   late TransformationController _transformationController;
-  bool _isPanEnabled = true;
-  bool _isScaleEnabled = true;
+  final bool _isPanEnabled = true;
+  final bool _isScaleEnabled = true;
 
   @override
   void initState() {
-    _reloadData();
+    // _reloadData();
     _transformationController = TransformationController();
+    // Request focus for keyboard interaction
+    focusNode.requestFocus();
     super.initState();
-  }
-
-  void _reloadData() async {
-    final dataStr = await rootBundle.loadString(
-      'assets/data/btc_last_year_price.json',
-    );
-    if (!mounted) {
-      return;
-    }
-    final json = jsonDecode(dataStr) as Map<String, dynamic>;
-    setState(() {
-      _bitcoinPriceHistory = (json['prices'] as List).map((item) {
-        final timestamp = item[0] as int;
-        final price = item[1] as double;
-        return (DateTime.fromMillisecondsSinceEpoch(timestamp), price);
-      }).toList();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const leftReservedSize = 52.0;
-    return Column(
-      spacing: 16,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            return width >= 380
-                ? Row(
-                    children: [
-                      const SizedBox(width: leftReservedSize),
-                      const _ChartTitle(),
-                      const Spacer(),
-                      Center(
-                        child: _TransformationButtons(
-                          controller: _transformationController,
-                        ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    children: [
-                      const _ChartTitle(),
-                      const SizedBox(height: 16),
-                      _TransformationButtons(
-                        controller: _transformationController,
-                      ),
-                    ],
-                  );
-          },
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            spacing: 16,
-            children: [
-              const Text('Pan'),
-              Switch(
-                value: _isPanEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _isPanEnabled = value;
-                  });
-                },
-              ),
-              const Text('Scale'),
-              Switch(
-                value: _isScaleEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _isScaleEnabled = value;
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-        AspectRatio(
-          aspectRatio: 1.4,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              top: 0.0,
-              right: 18.0,
-            ),
-            child: LineChart(
-              transformationConfig: FlTransformationConfig(
-                scaleAxis: FlScaleAxis.horizontal,
-                minScale: 1.0,
-                maxScale: 25.0,
-                panEnabled: _isPanEnabled,
-                scaleEnabled: _isScaleEnabled,
-                transformationController: _transformationController,
-              ),
-              LineChartData(
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: _bitcoinPriceHistory?.asMap().entries.map((e) {
-                          final index = e.key;
-                          final item = e.value;
-                          final value = item.$2;
-                          return FlSpot(index.toDouble(), value);
-                        }).toList() ??
-                        [],
-                    dotData: const FlDotData(show: false),
-                    color: AppColors.contentColorYellow,
-                    barWidth: 1,
-                    shadow: const Shadow(
-                      color: AppColors.contentColorYellow,
-                      blurRadius: 2,
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.contentColorYellow.withValues(alpha: 0.2),
-                          AppColors.contentColorYellow.withValues(alpha: 0.0),
-                        ],
-                        stops: const [0.5, 1.0],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ],
-                lineTouchData: LineTouchData(
-                  touchSpotThreshold: 5,
-                  getTouchLineStart: (_, __) => -double.infinity,
-                  getTouchLineEnd: (_, __) => double.infinity,
-                  getTouchedSpotIndicator:
-                      (LineChartBarData barData, List<int> spotIndexes) {
-                    return spotIndexes.map((spotIndex) {
-                      return TouchedSpotIndicatorData(
-                        const FlLine(
-                          color: AppColors.contentColorRed,
-                          strokeWidth: 1.5,
-                          dashArray: [8, 2],
-                        ),
-                        FlDotData(
-                          show: true,
-                          getDotPainter: (spot, percent, barData, index) {
-                            return FlDotCirclePainter(
-                              radius: 6,
-                              color: AppColors.contentColorYellow,
-                              strokeWidth: 0,
-                              strokeColor: AppColors.contentColorYellow,
-                            );
-                          },
-                        ),
-                      );
-                    }).toList();
-                  },
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-                      return touchedBarSpots.map((barSpot) {
-                        final price = barSpot.y;
-                        final date =
-                            _bitcoinPriceHistory![barSpot.x.toInt()].$1;
-                        return LineTooltipItem(
-                          '',
-                          const TextStyle(
-                            color: AppColors.contentColorBlack,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: '${date.year}/${date.month}/${date.day}',
-                              style: TextStyle(
-                                color: AppColors.contentColorGreen.darken(20),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                            TextSpan(
-                              text: '\n${AppUtils.getFormattedCurrency(
-                                context,
-                                price,
-                                noDecimals: true,
-                              )}',
-                              style: const TextStyle(
-                                color: AppColors.contentColorYellow,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList();
-                    },
-                    getTooltipColor: (LineBarSpot barSpot) =>
-                        AppColors.contentColorBlack,
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: const AxisTitles(
-                    drawBelowEverything: true,
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: leftReservedSize,
-                      maxIncluded: false,
-                      minIncluded: false,
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 38,
-                      maxIncluded: false,
-                      getTitlesWidget: (double value, TitleMeta meta) {
-                        final date = _bitcoinPriceHistory![value.toInt()].$1;
-                        return SideTitleWidget(
-                          meta: meta,
-                          child: Transform.rotate(
-                            angle: -45 * 3.14 / 180,
-                            child: Text(
-                              '${date.month}/${date.day}',
-                              style: const TextStyle(
-                                color: AppColors.contentColorGreen,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              duration: Duration.zero,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   @override
   void dispose() {
+    focusNode.dispose(); // Dispose of the focus node
     _transformationController.dispose();
     super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedLap = ref.watch(selectedLapProvider);
+    final lapData = ref.read(dataLogProvider.notifier).getLap(selectedLap);
+
+    List<FlSpot> afrSpots = _convertToSpotsWithFilter(
+        lapData,
+        'afr',
+        'timestamp',
+        20); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    //  print('rpmSpots $rpmSpots');
+
+    List<FlSpot> rpmSpots = _convertToSpotsWithFilter(
+        lapData,
+        'rpm',
+        'timestamp',
+        40500); //dataName, timestamp, threshold, if for example the rpm is 1000 and the next is 10000, it will be skipped
+
+    List<FlSpot> speedSpots = _convertToSpotsWithFilter(
+        lapData,
+        'speed',
+        'timestamp',
+        20); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    //  print('rpmSpots $rpmSpots');
+
+    List<FlSpot> tpsSpots = _convertToSpotsWithFilter(
+        lapData,
+        'tps',
+        'timestamp',
+        200); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    //  print('rpmSpots $rpmSpots');
+
+    List<FlSpot> engineTemperatureSpots = _convertToSpotsWithFilter(
+        lapData,
+        'coolantTemperature',
+        'timestamp',
+        2000); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    //  print('rpmSpots $rpmSpots');
+
+    return KeyboardListener(
+        focusNode: FocusNode(),
+        onKeyEvent: (KeyEvent event) {
+
+          if (event is KeyDownEvent) {
+            // Detect when the Space key is pressed
+            if (event.logicalKey == LogicalKeyboardKey.space) {
+              print('Spaced press');
+              setState(() {
+                curserModifierSet = !curserModifierSet;
+              });
+            }
+          }
+        },
+
+        //---------------------------------------------------------------------------------------------
+
+        child: Shortcuts(
+            shortcuts: {
+              LogicalKeySet(LogicalKeyboardKey.arrowLeft):
+                  const LeftArrowIntent(),
+              LogicalKeySet(LogicalKeyboardKey.arrowRight):
+                  const RightArrowIntent(),
+            },
+            child: Actions(
+                actions: {
+                  RightArrowIntent: CallbackAction<RightArrowIntent>(
+                    onInvoke: (intent) {
+                      {
+                        setState(() {
+                          touchIndex += 1; // Regular Right Arrow
+                          ref.read(indexProvider.notifier).setIndex(touchIndex);
+
+                          ref
+                              .read(currentTimeStampProvider.notifier)
+                              .setScreenPositionTimeStamp(
+                                rpmSpots.isNotEmpty &&
+                                        touchIndex >= 0 &&
+                                        touchIndex < rpmSpots.length
+                                    ? rpmSpots[touchIndex].x.toInt()
+                                    : 0,
+                              );
+                        });
+                      }
+                      return null;
+                    },
+                  ),
+
+                  LeftArrowIntent: CallbackAction<LeftArrowIntent>(
+                    onInvoke: (intent) {
+                      {
+                        setState(() {
+                          touchIndex -= 1; // Regular Left Arrow
+                          ref.read(indexProvider.notifier).setIndex(
+                              touchIndex); // set the index in the provider, needed for the track plot
+
+                          ref
+                              .read(currentTimeStampProvider
+                                  .notifier) // get the current timestamp from the provider, needed for updating values in left values panel
+                              .setScreenPositionTimeStamp(
+                                rpmSpots.isNotEmpty &&
+                                        touchIndex >= 0 &&
+                                        touchIndex < rpmSpots.length
+                                    ? rpmSpots[touchIndex].x.toInt()
+                                    : 0,
+                              );
+                        });
+                      }
+                      return null;
+                    },
+                  ),
+                  //---------------------------------------------------------------------------------------------
+                },
+                child: Focus(
+                  onFocusChange: (hasFocus) {
+                    if (!hasFocus) {
+                      setState(() {
+                        curserModifierSet =
+                            false; // Reset shift when focus is lost
+                      });
+                    }
+                  },
+                  child: Focus(
+                    autofocus: true,
+                    focusNode: focusNode,
+                    child: SingleChildScrollView(
+                      child: Stack(
+                        children: [
+                          Column(
+                            spacing: 1,
+                            children: [
+                              // LayoutBuilder(
+                              //   builder: (context, constraints) {
+                              //     final width = constraints.maxWidth;
+                              //     return width >= 380
+                              //         ? Row(
+                              //             children: [
+                              //               const SizedBox(width: leftReservedSize),
+                              //               // const _ChartTitle(),
+                              //               const Spacer(),
+                              //               Center(
+                              //                 child: _TransformationButtons(
+                              //                   controller: _transformationController,
+                              //                 ),
+                              //               ),
+                              //             ],
+                              //           )
+                              //         : Column(
+                              //             children: [
+                              //               //   const _ChartTitle(),
+                              //               const SizedBox(height: 16),
+                              //               _TransformationButtons(
+                              //                 controller: _transformationController,
+                              //               ),
+                              //             ],
+                              //           );
+                              //   },
+                              // ),
+                      
+                              MetricLineChart(
+                                minY: 0,
+                                maxY: 180,
+                                spots: speedSpots,
+                                yLabel: 'Speed',
+                                color: Colors.green,
+                                dashLineColour: Colors.green,
+                                panEnabled: _isPanEnabled,
+                                scaleEnabled: _isScaleEnabled,
+                                transformationController:
+                                    _transformationController,
+                                touchIndex: touchIndex,
+                                bottomTitleBuilder: (x) =>
+                                    x.toInt().toString(), // or format timestamp
+                                onTouch: (idx, x, y) {
+                                  final ts = x.toInt();
+                                  ref
+                                      .read(currentTimeStampProvider.notifier)
+                                      .setScreenPositionTimeStamp(ts);
+                                  ref.read(indexProvider.notifier).setIndex(idx);
+                                  setState(() => touchIndex = idx);
+                                },
+                              ),
+                      
+                              MetricLineChart(
+                                
+                                  minY: 0,
+                                  maxY: 14000,
+                                spots: rpmSpots,
+                                yLabel: 'RPM',
+                                color: Colors.blue,
+                                dashLineColour: Colors.amber,
+                                panEnabled: _isPanEnabled,
+                                scaleEnabled: _isScaleEnabled,
+                                transformationController:
+                                    _transformationController,
+                                touchIndex: touchIndex,
+                                bottomTitleBuilder: (x) =>
+                                    x.toInt().toString(), // or format timestamp
+                                onTouch: (idx, x, y) {
+                                  final ts = x.toInt();
+                                  ref
+                                      .read(currentTimeStampProvider.notifier)
+                                      .setScreenPositionTimeStamp(ts);
+                                  ref.read(indexProvider.notifier).setIndex(idx);
+                                  setState(() => touchIndex = idx);
+                                },
+                              ),
+                      
+                              MetricLineChart(
+                                  minY: 10,
+                                    maxY: 20,
+                                spots: afrSpots,
+                                yLabel: 'AFR',
+                                showBottomTitle: false,
+                                color: Colors.amber,
+                                dashLineColour: Colors.amber,
+                                panEnabled: _isPanEnabled,
+                                scaleEnabled: _isScaleEnabled,
+                                transformationController:
+                                    _transformationController,
+                                touchIndex: touchIndex,
+                                bottomTitleBuilder: (x) =>
+                                    x.toInt().toString(), // or format timestamp
+                                onTouch: (idx, x, y) {
+                                  final ts = x.toInt();
+                                  ref
+                                      .read(currentTimeStampProvider.notifier)
+                                      .setScreenPositionTimeStamp(ts);
+                                  ref.read(indexProvider.notifier).setIndex(idx);
+                                  setState(() => touchIndex = idx);
+                                },
+                              ),
+                      
+                              MetricLineChart(
+                                minY: 0,
+                                maxY: 100,
+                                spots: tpsSpots,
+                                yLabel: 'TPS',
+                                showBottomTitle: false,
+                                color: Colors.white,
+                                dashLineColour: Colors.white,
+                                panEnabled: _isPanEnabled,
+                                scaleEnabled: _isScaleEnabled,
+                                transformationController:
+                                    _transformationController,
+                                touchIndex: touchIndex,
+                                bottomTitleBuilder: (x) =>
+                                    x.toInt().toString(), // or format timestamp
+                                onTouch: (idx, x, y) {
+                                  final ts = x.toInt();
+                                  ref
+                                      .read(currentTimeStampProvider.notifier)
+                                      .setScreenPositionTimeStamp(ts);
+                                  ref.read(indexProvider.notifier).setIndex(idx);
+                                  setState(() => touchIndex = idx);
+                                },
+                              ),
+                                                          MetricLineChart(
+                                minY: 30,
+                                maxY: 110,
+                                spots: engineTemperatureSpots,
+                                yLabel: 'Engine Temp',
+                                showBottomTitle: false,
+                                color: Colors.red,
+                                dashLineColour: Colors.amber,
+                                panEnabled: _isPanEnabled,
+                                scaleEnabled: _isScaleEnabled,
+                                transformationController:
+                                    _transformationController,
+                                touchIndex: touchIndex,
+                                bottomTitleBuilder: (x) =>
+                                    x.toInt().toString(), // or format timestamp
+                                onTouch: (idx, x, y) {
+                                  final ts = x.toInt();
+                                  ref
+                                      .read(currentTimeStampProvider.notifier)
+                                      .setScreenPositionTimeStamp(ts);
+                                  ref.read(indexProvider.notifier).setIndex(idx);
+                                  setState(() => touchIndex = idx);
+                                },
+                              )
+                            ],
+                          ),
+                          Positioned(
+                            right: 20,
+                            top: 20,
+                            child: _TransformationButtons(
+                              controller: _transformationController,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ))));
+  }
+
+  //-------------------------------------------------------------------------------------------------
 }
 
 class _ChartTitle extends StatelessWidget {
@@ -287,7 +408,7 @@ class _ChartTitle extends StatelessWidget {
         Text(
           'Bitcoin Price History',
           style: TextStyle(
-            color: AppColors.contentColorYellow,
+            color: Colors.blue,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -295,7 +416,7 @@ class _ChartTitle extends StatelessWidget {
         Text(
           '2023/12/19 - 2024/12/17',
           style: TextStyle(
-            color: AppColors.contentColorGreen,
+            color: Colors.green,
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
@@ -315,64 +436,83 @@ class _TransformationButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Tooltip(
-          message: 'Zoom in',
-          child: IconButton(
-            icon: const Icon(
-              Icons.add,
-              size: 16,
-            ),
-            onPressed: _transformationZoomIn,
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(63, 0, 0, 0),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 0,
           ),
-        ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Tooltip(
-              message: 'Move left',
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios,
-                  size: 16,
-                ),
-                onPressed: _transformationMoveLeft,
+          Tooltip(
+            message: 'Zoom in',
+            child: IconButton(
+              icon: const Icon(
+                Icons.add,
+                size: 16,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
+              onPressed: _transformationZoomIn,
             ),
-            Tooltip(
-              message: 'Reset zoom',
-              child: IconButton(
-                icon: const Icon(
-                  Icons.refresh,
-                  size: 16,
-                ),
-                onPressed: _transformationReset,
-              ),
-            ),
-            Tooltip(
-              message: 'Move right',
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                ),
-                onPressed: _transformationMoveRight,
-              ),
-            ),
-          ],
-        ),
-        Tooltip(
-          message: 'Zoom out',
-          child: IconButton(
-            icon: const Icon(
-              Icons.minimize,
-              size: 16,
-            ),
-            onPressed: _transformationZoomOut,
           ),
-        ),
-      ],
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Tooltip(
+                message: 'Move left',
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios,
+                    size: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  onPressed: _transformationMoveLeft,
+                ),
+              ),
+              Tooltip(
+                message: 'Reset zoom',
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.refresh,
+                    size: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  onPressed: _transformationReset,
+                ),
+              ),
+              Tooltip(
+                message: 'Move right',
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  onPressed: _transformationMoveRight,
+                ),
+              ),
+            ],
+          ),
+          Tooltip(
+            message: 'Zoom out',
+            child: IconButton(
+              icon: const Icon(
+                Icons.minimize,
+                size: 16,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              onPressed: _transformationZoomOut,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -411,4 +551,19 @@ class _TransformationButtons extends StatelessWidget {
       1,
     );
   }
+}
+
+// Helper method to find the closest spot index based on x-coordinate
+int _findClosestSpotIndex(List<FlSpot> spots, double xValue) {
+  int closestIndex = 0;
+  double minDistance = (spots[0].x - xValue).abs();
+
+  for (int i = 1; i < spots.length; i++) {
+    double distance = (spots[i].x - xValue).abs();
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestIndex = i;
+    }
+  }
+  return closestIndex;
 }

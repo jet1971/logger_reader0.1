@@ -1,5 +1,9 @@
+// ignore_for_file: avoid_print
+
 import 'package:ble1/settings/calibrate_t_p_s_dialog.dart';
+import 'package:ble1/settings/check_server_for_venue_update.dart';
 import 'package:ble1/settings/show_temperature_calibration_dialog.dart';
+import 'package:ble1/settings/venues.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -10,6 +14,9 @@ bool daylightSaving = false;
 int rpmMultiplier = 1;
 int minRawTPS = 0;
 int maxRawTPS = 20000;
+bool updateAvailable = true;
+int deviceVenueListVersion = 0;
+int latestVenueList = 0;
 
 int rpm = 0;
 int tpsValue = 0;
@@ -54,12 +61,33 @@ class _SettingsState extends State<Settings> {
   void dispose() {
     liveDataSub.cancel();
     settingsSub.cancel();
-
     widget.liveDataCharacteristic.write(utf8.encode("STOP"));
     widget.liveDataCharacteristic.setNotifyValue(false);
     widget.settingsCharacteristic.setNotifyValue(false);
-
     super.dispose();
+  }
+
+  Future<void> checkForVenueListUpdate() async {
+    try {
+      final info = await fetchLatestVenueListInfo();
+      print('Device Venue List Number: $deviceVenueListVersion');
+      print('Latest Venue List: ${info.version}');
+
+      if (info.version > deviceVenueListVersion) {
+        // Show "Update available" UI
+        setState(() {
+          updateAvailable = true;
+          latestVenueList = info.version;
+        });
+      } else {
+        setState(() {
+          updateAvailable = false;
+          latestVenueList = info.version;
+        });
+      }
+    } catch (e) {
+      print('# Error checking update: $e');
+    }
   }
 
   Future<void> getLiveData(
@@ -71,7 +99,7 @@ class _SettingsState extends State<Settings> {
       // 2. Save the subscription so we can cancel it later
       liveDataSub = liveDataCharacteristic.onValueReceived.listen((value) {
         final jsonString = utf8.decode(value);
-        print("Live Data: $jsonString");
+        //  print("Live Data: $jsonString");
 
         try {
           final data = jsonDecode(jsonString);
@@ -103,13 +131,12 @@ class _SettingsState extends State<Settings> {
 
       // 3. Send the START command
       await liveDataCharacteristic.write(utf8.encode("START"));
+
       print("✅ Requested live data stream");
     } catch (e) {
       print("❌ Failed to get live data: $e");
     }
   }
-
-  // bool jsonReceived = false; // Track if real JSON has been received
 
   Future<void> getLoggerSettings(BluetoothCharacteristic c) async {
     try {
@@ -131,6 +158,9 @@ class _SettingsState extends State<Settings> {
           rpmMultiplier = jsonData['rpmMultiplier'] ?? 1;
           minRawTPS = jsonData['tpsMin'] ?? 0;
           maxRawTPS = jsonData['tpsMax'] ?? 20000;
+          deviceVenueListVersion = jsonData['venueListVersion'] ?? 0;
+
+          checkForVenueListUpdate();
 
           if (!mounted) return;
           setState(() {});
@@ -204,6 +234,88 @@ class _SettingsState extends State<Settings> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
+                  ParameterToAdjust(
+                      title: 'Venue List',
+                      value: '',
+                      adjustmentProcedure: updateAvailable
+                          ? Row(
+                              children: [
+                                TextButton(
+                                  child: const Text(
+                                    'Update Available',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        color: Colors.green, fontSize: 18),
+                                  ),
+                                  onPressed: () async {
+                                 await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => Venues(
+                                            updateAvailable: updateAvailable,
+                                            settingsCharacteristic:
+                                                widget.settingsCharacteristic),
+                                      ),
+                                    );
+                                 //   After Venues screen is popped:
+                                    setState(() {
+                                      updateAvailable = false;
+                                    });
+                                  },
+                                ),
+                                const SizedBox(width: 5),
+                                // Icon(
+                                //   Icons.update,
+                                //   color: Colors.white,
+                                //   size: 30,
+                                // ),
+
+                                Text(
+                                  'click to update',
+                                  style: TextStyle(
+                                    color: const Color.fromARGB(
+                                        255, 141, 140, 140),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                TextButton(
+                                  child: Text(
+                                    'Version $deviceVenueListVersion',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        color: Colors.blue, fontSize: 19),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => Venues(
+                                            updateAvailable: updateAvailable,
+                                            settingsCharacteristic:
+                                                widget.settingsCharacteristic),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'click to view',
+                                  style: TextStyle(
+                                    color: const Color.fromARGB(
+                                        255, 141, 140, 140),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            )),
                   const SizedBox(height: 20),
                   ParameterToAdjust(
                     title: 'Logger ID',
@@ -380,7 +492,10 @@ class _SetIdState extends State<SetId> {
                 labelStyle: TextStyle(color: Colors.black, fontSize: 18),
                 border: OutlineInputBorder(),
               ),
-              style: const TextStyle(fontSize: 18),
+              style: const TextStyle(
+                  fontSize: 18,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold),
             ),
             actions: <Widget>[
               Row(

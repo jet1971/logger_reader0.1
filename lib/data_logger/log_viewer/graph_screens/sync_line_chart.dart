@@ -184,7 +184,7 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
         }
       },
 
-//---------------------------------------------------------------------------------------------
+      //---------------------------------------------------------------------------------------------
 
       child: Shortcuts(
         shortcuts: {
@@ -221,10 +221,12 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                 {
                   setState(() {
                     touchIndex -= 1; // Regular Left Arrow
-                    ref.read(indexProvider.notifier).setIndex(touchIndex);// set the index in the provider, needed for the track plot
+                    ref.read(indexProvider.notifier).setIndex(
+                        touchIndex); // set the index in the provider, needed for the track plot
 
                     ref
-                        .read(currentTimeStampProvider.notifier)// get the current timestamp from the provider, needed for updating values in left values panel
+                        .read(currentTimeStampProvider
+                            .notifier) // get the current timestamp from the provider, needed for updating values in left values panel
                         .setScreenPositionTimeStamp(
                           rpmSpots.isNotEmpty &&
                                   touchIndex >= 0 &&
@@ -237,7 +239,7 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                 return null;
               },
             ),
-//---------------------------------------------------------------------------------------------
+            //---------------------------------------------------------------------------------------------
           },
           child: Focus(
             onFocusChange: (hasFocus) {
@@ -268,17 +270,53 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                               //   spots: testSpots,
                               belowBarData: BarAreaData(show: false),
                               color: Colors.blue,
-                              barWidth: 1,
-                              dotData: const FlDotData(show: false),
+                              barWidth: 1, //width of the actual graph line
+                              dotData: const FlDotData(
+                                show: false,
+                              ),
+
+                              //   dotData:FlDotData(
+                              //   show: true,
+                              //   getDotPainter: (spot, percent, barData, index) {
+                              //     return FlDotCirclePainter(
+                              //         radius: 6,
+                              //         color: Colors.blue,
+                              //         strokeWidth: 1,
+                              //         strokeColor: Colors.black);
+                              //   },
+                              // ),
                             ),
                           ],
                           minY: 0,
                           //  maxY: roundUpToNext1000(maxValues.maxRpm), // function to round up the axis to the next 10
                           //  maxY:roundUpToNext1000(13200),
-
                           maxY: 15000,
 
                           lineTouchData: LineTouchData(
+                            getTouchedSpotIndicator: (LineChartBarData barData,
+                                List<int> spotIndexes) {
+                              return spotIndexes.map((spotIndex) {
+                                return TouchedSpotIndicatorData(
+                                  const FlLine(
+                                    color: Colors.amber,
+                                    strokeWidth: 1.5,
+                                    dashArray: [8, 2],
+                                  ),
+                                  FlDotData(
+                                    show: true,
+                                    getDotPainter:
+                                        (spot, percent, barData, index) {
+                                      return FlDotCirclePainter(
+                                          radius: 6,
+                                          color: Colors.blue,
+                                          strokeWidth: 0,
+                                          strokeColor: Colors.black);
+                                    },
+                                  ),
+                                );
+                              }).toList();
+                            },
+
                             // touchSpotThreshold: 1,
                             handleBuiltInTouches: false,
                             touchTooltipData: LineTouchTooltipData(
@@ -330,6 +368,7 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                                 sideTitles: SideTitles(showTitles: false)),
                             rightTitles: AxisTitles(
                                 sideTitles: SideTitles(showTitles: false)),
+
                             //----------------------------------------------------------------------------------------------------------------
                             leftTitles: AxisTitles(
                               axisNameWidget: Text('RPM',
@@ -437,7 +476,8 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                                 getTitlesWidget: mphTitlesWidget,
                               ),
                             ),
-
+                            bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
                             //-------------------------------------------------------------------------------------------------
                             // bottomTitles: AxisTitles(
                             //   axisNameWidget:
@@ -503,6 +543,7 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                                 }).toList();
                               },
                             ),
+
                             touchCallback: (FlTouchEvent event,
                                 LineTouchResponse? touchResponse) {
                               setState(() {
@@ -551,15 +592,18 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                             ),
 
                             //-------------------------------------------------------------------------------------------------
+                            // bottomTitles: AxisTitles(
+                            //   axisNameWidget: Text('Time',
+                            //       style: TextStyle(color: Colors.white)),
+                            //   sideTitles: SideTitles(
+                            //     interval: 40000,
+                            //     reservedSize: 30,
+                            //     showTitles: true,
+                            //     getTitlesWidget: elapsedTimeTitlesWidget,
+                            //   ),
+                            // ),
                             bottomTitles: AxisTitles(
-                              axisNameWidget: Text('Time',
-                                  style: TextStyle(color: Colors.white)),
-                              sideTitles: SideTitles(
-                                interval: 40000,
-                                reservedSize: 30,
-                                showTitles: true,
-                                getTitlesWidget: elapsedTimeTitlesWidget,
-                              ),
+                              sideTitles: SideTitles(showTitles: false),
                             ),
                           ),
 
@@ -656,7 +700,8 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                                 getTitlesWidget: mphTitlesWidget,
                               ),
                             ),
-
+                            bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
                             //-------------------------------------------------------------------------------------------------
                             // bottomTitles: AxisTitles(
                             //   axisNameWidget:
@@ -764,7 +809,8 @@ class SyncedLineChartState extends ConsumerState<SyncedLineChart> {
                                 getTitlesWidget: mphTitlesWidget,
                               ),
                             ),
-
+                            bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
                             //-------------------------------------------------------------------------------------------------
                             // bottomTitles: AxisTitles(
                             //   axisNameWidget:
@@ -817,7 +863,8 @@ Widget mphTitlesWidget(double value, TitleMeta meta) {
     fontSize: 12,
   );
   return SideTitleWidget(
-    axisSide: meta.axisSide,
+    // axisSide: meta.axisSide,
+    meta: meta,
     child: Text(' ${value.toInt()}', style: style),
   );
 }
@@ -877,7 +924,8 @@ Widget elapsedTimeTitlesWidget(double value, TitleMeta meta) {
   // }
 
   return SideTitleWidget(
-    axisSide: meta.axisSide,
+    //   axisSide: meta.axisSide,
+    meta: meta,
     space: 12,
     child: Text(
       text,
