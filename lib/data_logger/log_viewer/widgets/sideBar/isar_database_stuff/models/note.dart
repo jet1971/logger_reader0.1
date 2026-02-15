@@ -1,4 +1,3 @@
-
 // Run the command to generate the code: flutter pub run build_runner build
 
 import 'package:isar/isar.dart';
@@ -13,6 +12,7 @@ class Note {
 
   // Structured fields
   String session = '';
+  String weather = '';
   String frontSprocket = '';
   String rearSprocket = '';
   String mainJet = '';
