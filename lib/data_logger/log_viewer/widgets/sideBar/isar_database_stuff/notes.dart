@@ -245,8 +245,10 @@ class _NotesFormState extends ConsumerState<NotesForm> {
                               fontSize: 15,
                             ),
                           ),
-                          SizedBox(width: 10,),
-                               Text(
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Text(
                             'Rider',
                             style: TextStyle(fontSize: 19, color: Colors.blue),
                           ),
@@ -323,7 +325,6 @@ class _NotesFormState extends ConsumerState<NotesForm> {
                                   ],
                                 ),
                               ),
-
                               Container(
                                 height: 35,
                                 color: Colors.white,
@@ -358,7 +359,6 @@ class _NotesFormState extends ConsumerState<NotesForm> {
                                   ],
                                 ),
                               ),
-
                               Container(
                                 height: 35,
                                 color: Colors.white,
@@ -401,9 +401,8 @@ class _NotesFormState extends ConsumerState<NotesForm> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            
-                              //   //---------------------------------- DEFINE THE NUMBER OF COLUMNS / FRONT SUSPENSION -----------------------------------------------------------
-                         
+                            //   //---------------------------------- DEFINE THE NUMBER OF COLUMNS / FRONT SUSPENSION -----------------------------------------------------------
+
                             DataTable(
                               columns: const <DataColumn>[
                                 DataColumn(
@@ -440,14 +439,13 @@ class _NotesFormState extends ConsumerState<NotesForm> {
                                     //           minWidth: 200, maxWidth: 200)),
                                     //   style: TextStyle(color: Colors.white),
                                     // )),
-                                    
                                   ],
                                 ),
                                 //---------------------------------------------------------------------------------------------
 
                                 DataRow(
                                   cells: <DataCell>[
-                                      DataCell(Text('Preload')),
+                                    DataCell(Text('Preload')),
                                     // DataCell(TextField(
                                     //   controller: frontSprocketController,
                                     //   decoration: const InputDecoration(
@@ -472,7 +470,7 @@ class _NotesFormState extends ConsumerState<NotesForm> {
                                 DataRow(
                                   cells: <DataCell>[
                                     DataCell(Text('Compression')),
-                                      DataCell(TextField(
+                                    DataCell(TextField(
                                       controller: rearSprocketController,
                                       decoration: const InputDecoration(
                                           constraints:
@@ -482,7 +480,7 @@ class _NotesFormState extends ConsumerState<NotesForm> {
                                   ],
                                 ),
                                 //---------------------------------------------------------------------------------------------
-                                                            
+
                                 DataRow(
                                   cells: <DataCell>[
                                     DataCell(Text('Rebound')),
@@ -502,8 +500,8 @@ class _NotesFormState extends ConsumerState<NotesForm> {
                             Padding(
                               padding: const EdgeInsets.all(28.0),
                               child: ConstrainedBox(
-                                constraints:
-                                    BoxConstraints(maxWidth: 400, maxHeight: 300),
+                                constraints: BoxConstraints(
+                                    maxWidth: 400, maxHeight: 300),
                                 child: Container(
                                   decoration: const BoxDecoration(
                                     color: Color.fromARGB(0, 0, 0,
@@ -520,7 +518,7 @@ class _NotesFormState extends ConsumerState<NotesForm> {
                               ),
                             ),
                             //------------------------------------------------------------------------------------------------
-                            
+
                             DataTable(
                               columns: const <DataColumn>[
                                 DataColumn(
@@ -628,8 +626,6 @@ class _NotesFormState extends ConsumerState<NotesForm> {
                                 ),
                               ],
                             ),
-
-
                           ],
                         ),
                       ],
