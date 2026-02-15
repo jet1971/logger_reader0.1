@@ -188,7 +188,7 @@ class _SettingsState extends State<Settings> {
       ),
       body: Center(
         child: SizedBox(
-          height: 700,
+          height: 800,
           width: 1200,
           child: Container(
             padding: const EdgeInsets.all(120.0),
@@ -209,7 +209,7 @@ class _SettingsState extends State<Settings> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 20),
+                 // const SizedBox(height: 20),
                   Row(
                     children: [
                       const Text(
@@ -375,12 +375,41 @@ class _SettingsState extends State<Settings> {
                     value: '$batteryVoltageDouble Volts',
                   ),
                   const SizedBox(height: 20),
-                  const SizedBox(height: 20),
+                
                   ParameterToAdjust(
                     title: 'AFR ',
                     value: '$afr : 1',
                   ),
                   const SizedBox(height: 20),
+                  Row(children: [Text('Dyno Mode',style: TextStyle(color: Colors.white, fontSize: 20),),
+                  const SizedBox(width: 20),
+                  Spacer(),
+                  ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          sendDynoStartCMD(widget.settingsCharacteristic);
+                        },
+                        child: Text(
+                            'Start Test'),
+                      ),
+                      SizedBox(width: 10),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          sendDynoStopCMD(widget.settingsCharacteristic);
+                          Navigator.of(context).pop();
+                        },
+                        child: Text(
+                            'Stop Test'),
+                      ),
+                      SizedBox(width: 20,),
+                  ],)
                 ],
               ),
             ),
@@ -600,5 +629,38 @@ Future<void> sendLoggerSettings(BluetoothCharacteristic c) async {
     print("✅ Sent settings to ESP32: $jsonString");
   } catch (e) {
     print("❌ Failed to send settings: $e");
+  }
+}
+
+Future<void> sendDynoStartCMD(BluetoothCharacteristic c) async {
+  try {
+    Map<String, dynamic> payload = {
+      "cmd": "DYNO_START",
+     "dateTime": DateTime.now().toIso8601String(),
+    };
+
+    String jsonString = jsonEncode(payload);
+    List<int> jsonBytes = utf8.encode(jsonString);
+
+    await c.write(jsonBytes, withoutResponse: false);
+    print("✅ Sent dyno start command to ESP32: $jsonString");
+  } catch (e) {
+    print("❌ Failed to send dyno start command: $e");
+  }
+}
+
+Future<void> sendDynoStopCMD(BluetoothCharacteristic c) async {
+  try {
+    Map<String, dynamic> payload = {
+      "cmd": "DYNO_STOP",
+    };
+
+    String jsonString = jsonEncode(payload);
+    List<int> jsonBytes = utf8.encode(jsonString);
+
+    await c.write(jsonBytes, withoutResponse: false);
+    print("✅ Sent dyno start command to ESP32: $jsonString");
+  } catch (e) {
+    print("❌ Failed to send dyno start command: $e");
   }
 }
