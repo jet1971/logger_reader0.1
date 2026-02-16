@@ -1,9 +1,7 @@
 // Dispays the startline cordinates in Settings/Venues screen
 
-
 import 'package:ble1/data_logger/log_viewer/widgets/sideBar/isar_database_stuff/models/venue_model.dart';
 import 'package:ble1/data_logger/models/venue.dart';
-import 'package:ble1/settings/settings.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -43,7 +41,7 @@ class _VenuesState extends State<Venues> {
       setState(() {
         venues = _venueListInfo!.venues;
       });
-     // updateAvailable ? sendVenueList(widget.settingsCharacteristic) : null;
+ 
      if (_isUpdating) {
         await sendVenueList(widget.settingsCharacteristic);
         await saveVenueListToIsar(venues);

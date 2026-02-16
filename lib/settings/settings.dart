@@ -49,6 +49,7 @@ class _SettingsState extends State<Settings> {
   late StreamSubscription<List<int>> liveDataSub;
   late StreamSubscription<List<int>> settingsSub;
   bool jsonReceived = false;
+  bool startTestPressed = false;
 
   @override
   void initState() {
@@ -188,10 +189,10 @@ class _SettingsState extends State<Settings> {
       ),
       body: Center(
         child: SizedBox(
-          height: 800,
-          width: 1200,
+          height: 600,
+          width: 1000,
           child: Container(
-            padding: const EdgeInsets.all(120.0),
+            padding: const EdgeInsets.fromLTRB(120, 40, 120, 20),
             decoration: BoxDecoration(
               color: Colors.grey[900],
               border: Border.all(color: Colors.white, width: 2),
@@ -209,7 +210,7 @@ class _SettingsState extends State<Settings> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                 // const SizedBox(height: 20),
+                  // const SizedBox(height: 20),
                   Row(
                     children: [
                       const Text(
@@ -249,7 +250,7 @@ class _SettingsState extends State<Settings> {
                                         color: Colors.green, fontSize: 18),
                                   ),
                                   onPressed: () async {
-                                 await Navigator.of(context).push(
+                                    await Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (context) => Venues(
                                             updateAvailable: updateAvailable,
@@ -257,7 +258,7 @@ class _SettingsState extends State<Settings> {
                                                 widget.settingsCharacteristic),
                                       ),
                                     );
-                                 //   After Venues screen is popped:
+                                    //   After Venues screen is popped:
                                     setState(() {
                                       updateAvailable = false;
                                     });
@@ -375,41 +376,48 @@ class _SettingsState extends State<Settings> {
                     value: '$batteryVoltageDouble Volts',
                   ),
                   const SizedBox(height: 20),
-                
+
                   ParameterToAdjust(
                     title: 'AFR ',
                     value: '$afr : 1',
                   ),
                   const SizedBox(height: 20),
-                  Row(children: [Text('Dyno Mode',style: TextStyle(color: Colors.white, fontSize: 20),),
-                  const SizedBox(width: 20),
-                  Spacer(),
-                  ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () {
-                          sendDynoStartCMD(widget.settingsCharacteristic);
-                        },
-                        child: Text(
-                            'Start Test'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Dyno Mode',
+                        style: TextStyle(color: Colors.white, fontSize: 20),
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 285),
+                      //  Spacer(),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
+                          backgroundColor:
+                              startTestPressed ? Colors.red : Colors.green,
                           foregroundColor: Colors.white,
                         ),
                         onPressed: () {
-                          sendDynoStopCMD(widget.settingsCharacteristic);
-                          Navigator.of(context).pop();
+                          if (startTestPressed) {
+                            sendDynoStopCMD(widget.settingsCharacteristic);
+                            setState(() {
+                              startTestPressed = false;
+                              Navigator.of(context).pop();
+                            });
+                          } else {
+                            sendDynoStartCMD(widget.settingsCharacteristic);
+                            setState(() {
+                              startTestPressed = true;
+                            });
+                          }
                         },
                         child: Text(
-                            'Stop Test'),
+                            startTestPressed ? 'Stop Test' : 'Start Test',
+                            style: TextStyle(fontSize: 16)),
                       ),
-                      SizedBox(width: 20,),
-                  ],)
+                      SizedBox(width: 100),
+                    ],
+                  )
                 ],
               ),
             ),
@@ -632,11 +640,12 @@ Future<void> sendLoggerSettings(BluetoothCharacteristic c) async {
   }
 }
 
+//----------------------------------------------------------------------------------
 Future<void> sendDynoStartCMD(BluetoothCharacteristic c) async {
   try {
     Map<String, dynamic> payload = {
       "cmd": "DYNO_START",
-     "dateTime": DateTime.now().toIso8601String(),
+      "dateTime": DateTime.now().toIso8601String(),
     };
 
     String jsonString = jsonEncode(payload);
@@ -649,6 +658,7 @@ Future<void> sendDynoStartCMD(BluetoothCharacteristic c) async {
   }
 }
 
+//----------------------------------------------------------------------------------
 Future<void> sendDynoStopCMD(BluetoothCharacteristic c) async {
   try {
     Map<String, dynamic> payload = {
@@ -664,3 +674,4 @@ Future<void> sendDynoStopCMD(BluetoothCharacteristic c) async {
     print("❌ Failed to send dyno start command: $e");
   }
 }
+//----------------------------------------------------------------------------------
