@@ -28,6 +28,7 @@ int batteryVoltage = 0;
 double batteryVoltageDouble = 0.0;
 int rawLambda = 0;
 double afr = 0;
+int oilTemperature = 0;
 
 final StreamController<Map<String, dynamic>> streamController =
     StreamController.broadcast();
@@ -116,6 +117,7 @@ class _SettingsState extends State<Settings> {
           rawLambda = data['lambda'] ?? 0;
           afr = (rawLambda / 100.0) * 14.7;
           afr = double.parse(afr.toStringAsFixed(2));
+          oilTemperature = data['oilTemp'] ?? 0;
 
           streamController.add({
             'raw': rawTpsValue,
@@ -372,6 +374,11 @@ class _SettingsState extends State<Settings> {
                   ),
                   const SizedBox(height: 20),
                   ParameterToAdjust(
+                    title: 'Oil Temperature',
+                    value: '$oilTemperature °C',
+                  ),
+                  const SizedBox(height: 20),
+                  ParameterToAdjust(
                     title: 'Battery Voltage',
                     value: '$batteryVoltageDouble Volts',
                   ),
@@ -412,7 +419,7 @@ class _SettingsState extends State<Settings> {
                           }
                         },
                         child: Text(
-                            startTestPressed ? 'Stop Test' : 'Start Test',
+                            startTestPressed ? 'Stop Logging' : 'Start Logging',
                             style: TextStyle(fontSize: 16)),
                       ),
                       SizedBox(width: 100),

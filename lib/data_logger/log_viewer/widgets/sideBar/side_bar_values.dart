@@ -122,6 +122,26 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
                 valueKey: 'speed',
               ).toString(),
               valuesTextColor: valueTextColor),
+                      const SizedBox(height: 20),
+          ValuesText(
+              title: 'RPM:',
+              value: findClosestEntry(
+                targetTimestamp: targetTimestamp,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
+                timestampKey: 'timestamp',
+                valueKey: 'rpm',
+              ).toString(),
+              valuesTextColor: valueTextColor),
+                    const SizedBox(height: 20),
+          ValuesText(
+              title: 'AFR ( :1 )',
+              value: findClosestEntry(
+                targetTimestamp: targetTimestamp,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
+                timestampKey: 'timestamp',
+                valueKey: 'afr',
+              ).toString(),
+              valuesTextColor: valueTextColor),
           const SizedBox(height: 20),
           ValuesText(
               title: 'Throttle (%)',
@@ -132,16 +152,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
                 valueKey: 'tps',
               ).toString(),
               valuesTextColor: valueTextColor),
-          const SizedBox(height: 20),
-          ValuesText(
-              title: 'RPM:',
-              value: findClosestEntry(
-                targetTimestamp: targetTimestamp,
-                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
-                timestampKey: 'timestamp',
-                valueKey: 'rpm',
-              ).toString(),
-              valuesTextColor: valueTextColor),
+  
           const SizedBox(height: 20),
           ValuesText(
               title: 'Eng Temp (C)',
@@ -151,6 +162,17 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
                 data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
                 timestampKey: 'timestamp',
                 valueKey: 'coolantTemperature',
+              ).toString(),
+              valuesTextColor: valueTextColor),
+          const SizedBox(height: 20),
+                  ValuesText(
+              title: 'Oil Temp (C)',
+              //value: engTemp.toString(),
+              value: findClosestEntry(
+                targetTimestamp: targetTimestamp,
+                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
+                timestampKey: 'timestamp',
+                valueKey: 'oilTemperature',
               ).toString(),
               valuesTextColor: valueTextColor),
           const SizedBox(height: 20),
@@ -183,16 +205,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
                 valueKey: 'oilPressure',
               ).toString(),
               valuesTextColor: valueTextColor),
-          const SizedBox(height: 20),
-          ValuesText(
-              title: 'AFR ( :1 )',
-              value: findClosestEntry(
-                targetTimestamp: targetTimestamp,
-                data: ref.read(dataLogProvider.notifier).getLap(selectedLap),
-                timestampKey: 'timestamp',
-                valueKey: 'afr',
-              ).toString(),
-              valuesTextColor: valueTextColor),
+    
       
           const SizedBox(height: 20),
           ValuesText(

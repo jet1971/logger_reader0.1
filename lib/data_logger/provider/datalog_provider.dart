@@ -114,7 +114,7 @@ class DataLogProvider extends StateNotifier<Uint8List> {
       int airBoxPressure = bd.getUint8(18);
       int airTemperature = bd.getUint8(19);
       int coolantTemperature = bd.getUint8(20);
-      int oilPressure = bd.getUint8(21);
+      int oilTemperature = bd.getUint8(21);
       int bVoltage = bd.getUint8(22);
       int lap = bd.getUint8(23); // 'spare' as lap number
 
@@ -137,7 +137,7 @@ class DataLogProvider extends StateNotifier<Uint8List> {
         'airboxPressure': modAirBoxPressure,
         'airTemperature': airTemperature.toDouble(),
         'coolantTemperature': coolantTemperature.toDouble(),
-        'oilPressure': oilPressure,
+        'oilTemperature': oilTemperature.toDouble(),
         'batteryVoltage': modBatteryVoltage,
         'lap': lap,
         'spare': 0, // Placeholder for spare field

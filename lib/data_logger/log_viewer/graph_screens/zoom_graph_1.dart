@@ -1,5 +1,4 @@
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -135,6 +134,12 @@ class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
         'timestamp',
         2000); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
     //  print('rpmSpots $rpmSpots');
+       List<FlSpot> oilTemperatureSpots = _convertToSpotsWithFilter(
+        lapData,
+        'oilTemperature',
+        'timestamp',
+        2000); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    //  print('rpmSpots $rpmSpots');
 
     return KeyboardListener(
         focusNode: FocusNode(),
@@ -257,7 +262,12 @@ class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
                       
                               MetricLineChart(
                                 minY: 0,
-                                maxY: 180,
+                                maxY: speedSpots.isNotEmpty
+                                    ? speedSpots
+                                            .map((spot) => spot.y)
+                                            .reduce((a, b) => a > b ? a : b) +
+                                        10
+                                    : 180,
                                 spots: speedSpots,
                                 yLabel: 'Speed',
                                 color: Colors.green,
@@ -282,7 +292,12 @@ class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
                               MetricLineChart(
                                 
                                   minY: 0,
-                                  maxY: 14000,
+                                  maxY: rpmSpots.isNotEmpty
+                                      ? rpmSpots
+                                              .map((spot) => spot.y)
+                                              .reduce((a, b) => a > b ? a : b) +
+                                          500
+                                      : 16000,
                                 spots: rpmSpots,
                                 yLabel: 'RPM',
                                 color: Colors.blue,
@@ -306,7 +321,12 @@ class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
                       
                               MetricLineChart(
                                   minY: 10,
-                                    maxY: 20,
+                                    maxY: afrSpots.isNotEmpty
+                                        ? afrSpots
+                                                .map((spot) => spot.y)
+                                                .reduce((a, b) => a > b ? a : b) +
+                                            10
+                                        : 20,
                                 spots: afrSpots,
                                 yLabel: 'AFR',
                                 showBottomTitle: false,
@@ -354,7 +374,7 @@ class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
                                 },
                               ),
                                                           MetricLineChart(
-                                minY: 30,
+                                minY: 0,
                                 maxY: 110,
                                 spots: engineTemperatureSpots,
                                 yLabel: 'Engine Temp',
@@ -374,6 +394,38 @@ class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
                                       .read(currentTimeStampProvider.notifier)
                                       .setScreenPositionTimeStamp(ts);
                                   ref.read(indexProvider.notifier).setIndex(idx);
+                                  setState(() => touchIndex = idx);
+                                },
+                              ),
+                                                                       MetricLineChart(
+                                minY: 0,
+                                maxY: oilTemperatureSpots.isNotEmpty
+                                    ? oilTemperatureSpots
+                                            .map((spot) => spot.y)
+                                            .reduce((a, b) => a > b ? a : b) +
+                                        10
+                                    : 110,
+                 
+                                spots: oilTemperatureSpots,
+                                yLabel: 'Oil Temp',
+                                showBottomTitle: false,
+                                color: const Color.fromARGB(255, 54, 206, 244),
+                                dashLineColour: Colors.amber,
+                                panEnabled: _isPanEnabled,
+                                scaleEnabled: _isScaleEnabled,
+                                transformationController:
+                                    _transformationController,
+                                touchIndex: touchIndex,
+                                bottomTitleBuilder: (x) =>
+                                    x.toInt().toString(), // or format timestamp
+                                onTouch: (idx, x, y) {
+                                  final ts = x.toInt();
+                                  ref
+                                      .read(currentTimeStampProvider.notifier)
+                                      .setScreenPositionTimeStamp(ts);
+                                  ref
+                                      .read(indexProvider.notifier)
+                                      .setIndex(idx);
                                   setState(() => touchIndex = idx);
                                 },
                               )
