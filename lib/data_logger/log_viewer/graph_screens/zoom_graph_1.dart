@@ -15,6 +15,14 @@ class LeftArrowIntent extends Intent {
   const LeftArrowIntent();
 }
 
+class EscIntent extends Intent {
+  const EscIntent();
+}
+
+class _SpaceIntent extends Intent {
+  const _SpaceIntent();
+}
+
 const leftReservedSize = 52.0;
 int touchResponseTimestamp =
     0; // Global variable to store the timestamp of the touch response
@@ -134,318 +142,328 @@ class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
         'timestamp',
         2000); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
     //  print('rpmSpots $rpmSpots');
-       List<FlSpot> oilTemperatureSpots = _convertToSpotsWithFilter(
+    List<FlSpot> oilTemperatureSpots = _convertToSpotsWithFilter(
         lapData,
         'oilTemperature',
         'timestamp',
         2000); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
     //  print('rpmSpots $rpmSpots');
 
-    return KeyboardListener(
-        focusNode: FocusNode(),
-        onKeyEvent: (KeyEvent event) {
+    // Ensure focus is requested after build so focus isn't lost when parent widgets
+    // change.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!focusNode.hasFocus) focusNode.requestFocus();
+    });
 
-          if (event is KeyDownEvent) {
-            // Detect when the Space key is pressed
-            if (event.logicalKey == LogicalKeyboardKey.space) {
-              print('Spaced press');
+    // Use Shortcuts/Actions entirely (avoid KeyboardListener) so we don't
+    // attach the same `focusNode` to multiple Focus widgets and create
+    // ancestor loops. Add a `SpaceIntent` to handle the space key.
+    return Shortcuts(
+      shortcuts: {
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft): const LeftArrowIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowRight): const RightArrowIntent(),
+        LogicalKeySet(LogicalKeyboardKey.escape): const EscIntent(),
+        LogicalKeySet(LogicalKeyboardKey.space): const _SpaceIntent(),
+      },
+      child: Actions(
+        actions: {
+          RightArrowIntent: CallbackAction<RightArrowIntent>(
+            onInvoke: (intent) {
+              {
+                setState(() {
+                  touchIndex += 1; // Regular Right Arrow
+                  ref.read(indexProvider.notifier).setIndex(touchIndex);
+
+                  ref
+                      .read(currentTimeStampProvider.notifier)
+                      .setScreenPositionTimeStamp(
+                        rpmSpots.isNotEmpty &&
+                                touchIndex >= 0 &&
+                                touchIndex < rpmSpots.length
+                            ? rpmSpots[touchIndex].x.toInt()
+                            : 0,
+                      );
+                });
+              }
+              return null;
+            },
+          ),
+
+          LeftArrowIntent: CallbackAction<LeftArrowIntent>(
+            onInvoke: (intent) {
+              {
+                setState(() {
+                  touchIndex -= 1; // Regular Left Arrow
+                  ref.read(indexProvider.notifier).setIndex(
+                      touchIndex); // set the index in the provider, needed for the track plot
+
+                  ref
+                      .read(currentTimeStampProvider
+                          .notifier) // get the current timestamp from the provider, needed for updating values in left values panel
+                      .setScreenPositionTimeStamp(
+                        rpmSpots.isNotEmpty &&
+                                touchIndex >= 0 &&
+                                touchIndex < rpmSpots.length
+                            ? rpmSpots[touchIndex].x.toInt()
+                            : 0,
+                      );
+                });
+              }
+              return null;
+            },
+          ),
+          EscIntent: CallbackAction<EscIntent>(
+            onInvoke: (intent) {
+              _transformationReset();
+              return null;
+            },
+          ),
+          _SpaceIntent: CallbackAction<_SpaceIntent>(
+            onInvoke: (intent) {
               setState(() {
                 curserModifierSet = !curserModifierSet;
               });
-            }
-          }
-        },
-
-        //---------------------------------------------------------------------------------------------
-
-        child: Shortcuts(
-            shortcuts: {
-              LogicalKeySet(LogicalKeyboardKey.arrowLeft):
-                  const LeftArrowIntent(),
-              LogicalKeySet(LogicalKeyboardKey.arrowRight):
-                  const RightArrowIntent(),
+              return null;
             },
-            child: Actions(
-                actions: {
-                  RightArrowIntent: CallbackAction<RightArrowIntent>(
-                    onInvoke: (intent) {
-                      {
-                        setState(() {
-                          touchIndex += 1; // Regular Right Arrow
-                          ref.read(indexProvider.notifier).setIndex(touchIndex);
+          ),
 
+          //---------------------------------------------------------------------------------------------
+        },
+        child: Focus(
+          autofocus: true,
+          focusNode: focusNode,
+          onFocusChange: (hasFocus) {
+            if (!hasFocus) {
+              setState(() {
+                curserModifierSet = false; // Reset shift when focus is lost
+              });
+            }
+          },
+          child: GestureDetector(
+            onDoubleTapDown: (details) {
+              _zoomAtPosition(details.localPosition);
+            },
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  child: Column(
+                    spacing: 1,
+                    children: [
+                      MetricLineChart(
+                        minY: 0,
+                        maxY: speedSpots.isNotEmpty
+                            ? speedSpots
+                                    .map((spot) => spot.y)
+                                    .reduce((a, b) => a > b ? a : b) +
+                                10
+                            : 180,
+                        spots: speedSpots,
+                        yLabel: 'Speed',
+                        color: Colors.green,
+                        dashLineColour: Colors.green,
+                        panEnabled: _isPanEnabled,
+                        scaleEnabled: _isScaleEnabled,
+                        transformationController: _transformationController,
+                        touchIndex: touchIndex,
+                        bottomTitleBuilder:
+                            (x) => // build bottom titles based on x value (timestamp)
+                                x.toInt().toString(), // or format timestamp
+
+                        // Center the chart on the current touch position when scaling
+                        onTouch: (idx, x, y) {
+                          // Update the touch index and timestamp in the provider when a touch event occurs
+                          final ts = x.toInt();
                           ref
                               .read(currentTimeStampProvider.notifier)
-                              .setScreenPositionTimeStamp(
-                                rpmSpots.isNotEmpty &&
-                                        touchIndex >= 0 &&
-                                        touchIndex < rpmSpots.length
-                                    ? rpmSpots[touchIndex].x.toInt()
-                                    : 0,
-                              );
-                        });
-                      }
-                      return null;
-                    },
-                  ),
-
-                  LeftArrowIntent: CallbackAction<LeftArrowIntent>(
-                    onInvoke: (intent) {
-                      {
-                        setState(() {
-                          touchIndex -= 1; // Regular Left Arrow
-                          ref.read(indexProvider.notifier).setIndex(
-                              touchIndex); // set the index in the provider, needed for the track plot
-
-                          ref
-                              .read(currentTimeStampProvider
-                                  .notifier) // get the current timestamp from the provider, needed for updating values in left values panel
-                              .setScreenPositionTimeStamp(
-                                rpmSpots.isNotEmpty &&
-                                        touchIndex >= 0 &&
-                                        touchIndex < rpmSpots.length
-                                    ? rpmSpots[touchIndex].x.toInt()
-                                    : 0,
-                              );
-                        });
-                      }
-                      return null;
-                    },
-                  ),
-                  //---------------------------------------------------------------------------------------------
-                },
-                child: Focus(
-                  onFocusChange: (hasFocus) {
-                    if (!hasFocus) {
-                      setState(() {
-                        curserModifierSet =
-                            false; // Reset shift when focus is lost
-                      });
-                    }
-                  },
-                  child: Focus(
-                    autofocus: true,
-                    focusNode: focusNode,
-                    child: SingleChildScrollView(
-                      child: Stack(
-                        children: [
-                          Column(
-                            spacing: 1,
-                            children: [
-                              // LayoutBuilder(
-                              //   builder: (context, constraints) {
-                              //     final width = constraints.maxWidth;
-                              //     return width >= 380
-                              //         ? Row(
-                              //             children: [
-                              //               const SizedBox(width: leftReservedSize),
-                              //               // const _ChartTitle(),
-                              //               const Spacer(),
-                              //               Center(
-                              //                 child: _TransformationButtons(
-                              //                   controller: _transformationController,
-                              //                 ),
-                              //               ),
-                              //             ],
-                              //           )
-                              //         : Column(
-                              //             children: [
-                              //               //   const _ChartTitle(),
-                              //               const SizedBox(height: 16),
-                              //               _TransformationButtons(
-                              //                 controller: _transformationController,
-                              //               ),
-                              //             ],
-                              //           );
-                              //   },
-                              // ),
-                      
-                              MetricLineChart(
-                                minY: 0,
-                                maxY: speedSpots.isNotEmpty
-                                    ? speedSpots
-                                            .map((spot) => spot.y)
-                                            .reduce((a, b) => a > b ? a : b) +
-                                        10
-                                    : 180,
-                                spots: speedSpots,
-                                yLabel: 'Speed',
-                                color: Colors.green,
-                                dashLineColour: Colors.green,
-                                panEnabled: _isPanEnabled,
-                                scaleEnabled: _isScaleEnabled,
-                                transformationController:
-                                    _transformationController,
-                                touchIndex: touchIndex,
-                                bottomTitleBuilder: (x) =>
-                                    x.toInt().toString(), // or format timestamp
-                                onTouch: (idx, x, y) {
-                                  final ts = x.toInt();
-                                  ref
-                                      .read(currentTimeStampProvider.notifier)
-                                      .setScreenPositionTimeStamp(ts);
-                                  ref.read(indexProvider.notifier).setIndex(idx);
-                                  setState(() => touchIndex = idx);
-                                },
-                              ),
-                      
-                              MetricLineChart(
-                                
-                                  minY: 0,
-                                  maxY: rpmSpots.isNotEmpty
-                                      ? rpmSpots
-                                              .map((spot) => spot.y)
-                                              .reduce((a, b) => a > b ? a : b) +
-                                          500
-                                      : 16000,
-                                spots: rpmSpots,
-                                yLabel: 'RPM',
-                                color: Colors.blue,
-                                dashLineColour: Colors.amber,
-                                panEnabled: _isPanEnabled,
-                                scaleEnabled: _isScaleEnabled,
-                                transformationController:
-                                    _transformationController,
-                                touchIndex: touchIndex,
-                                bottomTitleBuilder: (x) =>
-                                    x.toInt().toString(), // or format timestamp
-                                onTouch: (idx, x, y) {
-                                  final ts = x.toInt();
-                                  ref
-                                      .read(currentTimeStampProvider.notifier)
-                                      .setScreenPositionTimeStamp(ts);
-                                  ref.read(indexProvider.notifier).setIndex(idx);
-                                  setState(() => touchIndex = idx);
-                                },
-                              ),
-                      
-                              MetricLineChart(
-                                  minY: 10,
-                                    maxY: afrSpots.isNotEmpty
-                                        ? afrSpots
-                                                .map((spot) => spot.y)
-                                                .reduce((a, b) => a > b ? a : b) +
-                                            10
-                                        : 20,
-                                spots: afrSpots,
-                                yLabel: 'AFR',
-                                showBottomTitle: false,
-                                color: Colors.amber,
-                                dashLineColour: Colors.amber,
-                                panEnabled: _isPanEnabled,
-                                scaleEnabled: _isScaleEnabled,
-                                transformationController:
-                                    _transformationController,
-                                touchIndex: touchIndex,
-                                bottomTitleBuilder: (x) =>
-                                    x.toInt().toString(), // or format timestamp
-                                onTouch: (idx, x, y) {
-                                  final ts = x.toInt();
-                                  ref
-                                      .read(currentTimeStampProvider.notifier)
-                                      .setScreenPositionTimeStamp(ts);
-                                  ref.read(indexProvider.notifier).setIndex(idx);
-                                  setState(() => touchIndex = idx);
-                                },
-                              ),
-                      
-                              MetricLineChart(
-                                minY: 0,
-                                maxY: 100,
-                                spots: tpsSpots,
-                                yLabel: 'TPS',
-                                showBottomTitle: false,
-                                color: Colors.white,
-                                dashLineColour: Colors.white,
-                                panEnabled: _isPanEnabled,
-                                scaleEnabled: _isScaleEnabled,
-                                transformationController:
-                                    _transformationController,
-                                touchIndex: touchIndex,
-                                bottomTitleBuilder: (x) =>
-                                    x.toInt().toString(), // or format timestamp
-                                onTouch: (idx, x, y) {
-                                  final ts = x.toInt();
-                                  ref
-                                      .read(currentTimeStampProvider.notifier)
-                                      .setScreenPositionTimeStamp(ts);
-                                  ref.read(indexProvider.notifier).setIndex(idx);
-                                  setState(() => touchIndex = idx);
-                                },
-                              ),
-                                                          MetricLineChart(
-                                minY: 0,
-                                maxY: 110,
-                                spots: engineTemperatureSpots,
-                                yLabel: 'Engine Temp',
-                                showBottomTitle: false,
-                                color: Colors.red,
-                                dashLineColour: Colors.amber,
-                                panEnabled: _isPanEnabled,
-                                scaleEnabled: _isScaleEnabled,
-                                transformationController:
-                                    _transformationController,
-                                touchIndex: touchIndex,
-                                bottomTitleBuilder: (x) =>
-                                    x.toInt().toString(), // or format timestamp
-                                onTouch: (idx, x, y) {
-                                  final ts = x.toInt();
-                                  ref
-                                      .read(currentTimeStampProvider.notifier)
-                                      .setScreenPositionTimeStamp(ts);
-                                  ref.read(indexProvider.notifier).setIndex(idx);
-                                  setState(() => touchIndex = idx);
-                                },
-                              ),
-                                                                       MetricLineChart(
-                                minY: 0,
-                                maxY: oilTemperatureSpots.isNotEmpty
-                                    ? oilTemperatureSpots
-                                            .map((spot) => spot.y)
-                                            .reduce((a, b) => a > b ? a : b) +
-                                        10
-                                    : 110,
-                 
-                                spots: oilTemperatureSpots,
-                                yLabel: 'Oil Temp',
-                                showBottomTitle: false,
-                                color: const Color.fromARGB(255, 54, 206, 244),
-                                dashLineColour: Colors.amber,
-                                panEnabled: _isPanEnabled,
-                                scaleEnabled: _isScaleEnabled,
-                                transformationController:
-                                    _transformationController,
-                                touchIndex: touchIndex,
-                                bottomTitleBuilder: (x) =>
-                                    x.toInt().toString(), // or format timestamp
-                                onTouch: (idx, x, y) {
-                                  final ts = x.toInt();
-                                  ref
-                                      .read(currentTimeStampProvider.notifier)
-                                      .setScreenPositionTimeStamp(ts);
-                                  ref
-                                      .read(indexProvider.notifier)
-                                      .setIndex(idx);
-                                  setState(() => touchIndex = idx);
-                                },
-                              )
-                            ],
-                          ),
-                          Positioned(
-                            right: 20,
-                            top: 20,
-                            child: _TransformationButtons(
-                              controller: _transformationController,
-                            ),
-                          )
-                        ],
+                              .setScreenPositionTimeStamp(ts);
+                          ref.read(indexProvider.notifier).setIndex(idx);
+                          setState(() => touchIndex = idx);
+                        },
                       ),
-                    ),
+                      MetricLineChart(
+                        minY: 0,
+                        maxY: rpmSpots.isNotEmpty
+                            ? rpmSpots
+                                    .map((spot) => spot.y)
+                                    .reduce((a, b) => a > b ? a : b) +
+                                500
+                            : 16000,
+                        spots: rpmSpots,
+                        yLabel: 'RPM',
+                        color: Colors.blue,
+                        dashLineColour: Colors.amber,
+                        panEnabled: _isPanEnabled,
+                        scaleEnabled: _isScaleEnabled,
+                        transformationController: _transformationController,
+                        touchIndex: touchIndex,
+                        bottomTitleBuilder: (x) =>
+                            x.toInt().toString(), // or format timestamp
+                        onTouch: (idx, x, y) {
+                          final ts = x.toInt();
+                          ref
+                              .read(currentTimeStampProvider.notifier)
+                              .setScreenPositionTimeStamp(ts);
+                          ref.read(indexProvider.notifier).setIndex(idx);
+                          setState(() => touchIndex = idx);
+                        },
+                      ),
+                      MetricLineChart(
+                        minY: 10,
+                        maxY: afrSpots.isNotEmpty
+                            ? afrSpots
+                                    .map((spot) => spot.y)
+                                    .reduce((a, b) => a > b ? a : b) +
+                                2
+                            : 20,
+                        spots: afrSpots,
+                        yLabel: 'AFR',
+                        showBottomTitle: false,
+                        color: Colors.amber,
+                        dashLineColour: Colors.amber,
+                        panEnabled: _isPanEnabled,
+                        scaleEnabled: _isScaleEnabled,
+                        transformationController: _transformationController,
+                        touchIndex: touchIndex,
+                        bottomTitleBuilder: (x) =>
+                            x.toInt().toString(), // or format timestamp
+                        onTouch: (idx, x, y) {
+                          final ts = x.toInt();
+                          ref
+                              .read(currentTimeStampProvider.notifier)
+                              .setScreenPositionTimeStamp(ts);
+                          ref.read(indexProvider.notifier).setIndex(idx);
+                          setState(() => touchIndex = idx);
+                        },
+                      ),
+                      MetricLineChart(
+                        minY: 0,
+                        maxY: 110,
+                        spots: tpsSpots,
+                        yLabel: 'TPS',
+                        showBottomTitle: false,
+                        color: Colors.white,
+                        dashLineColour: Colors.white,
+                        panEnabled: _isPanEnabled,
+                        scaleEnabled: _isScaleEnabled,
+                        transformationController: _transformationController,
+                        touchIndex: touchIndex,
+                        bottomTitleBuilder: (x) =>
+                            x.toInt().toString(), // or format timestamp
+                        onTouch: (idx, x, y) {
+                          final ts = x.toInt();
+                          ref
+                              .read(currentTimeStampProvider.notifier)
+                              .setScreenPositionTimeStamp(ts);
+                          ref.read(indexProvider.notifier).setIndex(idx);
+                          setState(() => touchIndex = idx);
+                        },
+                      ),
+                      MetricLineChart(
+                        minY: 0,
+                        maxY: 110,
+                        spots: engineTemperatureSpots,
+                        yLabel: 'Engine Temp',
+                        showBottomTitle: false,
+                        color: Colors.red,
+                        dashLineColour: Colors.amber,
+                        panEnabled: _isPanEnabled,
+                        scaleEnabled: _isScaleEnabled,
+                        transformationController: _transformationController,
+                        touchIndex: touchIndex,
+                        bottomTitleBuilder: (x) =>
+                            x.toInt().toString(), // or format timestamp
+                        onTouch: (idx, x, y) {
+                          final ts = x.toInt();
+                          ref
+                              .read(currentTimeStampProvider.notifier)
+                              .setScreenPositionTimeStamp(ts);
+                          ref.read(indexProvider.notifier).setIndex(idx);
+                          setState(() => touchIndex = idx);
+                        },
+                      ),
+                      MetricLineChart(
+                        minY: 0,
+                        maxY: oilTemperatureSpots.isNotEmpty
+                            ? oilTemperatureSpots
+                                    .map((spot) => spot.y)
+                                    .reduce((a, b) => a > b ? a : b) +
+                                10
+                            : 110,
+
+                        spots: oilTemperatureSpots,
+                        yLabel: 'Oil Temp',
+                        showBottomTitle: false,
+                        color: const Color.fromARGB(255, 54, 206, 244),
+                        dashLineColour: Colors.amber,
+                        panEnabled: _isPanEnabled,
+                        scaleEnabled: _isScaleEnabled,
+                        transformationController: _transformationController,
+                        touchIndex: touchIndex,
+                        bottomTitleBuilder: (x) =>
+                            x.toInt().toString(), // or format timestamp
+                        onTouch: (idx, x, y) {
+                          final ts = x.toInt();
+                          ref
+                              .read(currentTimeStampProvider.notifier)
+                              .setScreenPositionTimeStamp(ts);
+                          ref.read(indexProvider.notifier).setIndex(idx);
+                          setState(() => touchIndex = idx);
+                        },
+                      )
+                    ],
                   ),
-                ))));
+                ),
+                Positioned(
+                  right: 20,
+                  top: 20,
+                  child: _TransformationButtons(
+                    controller: _transformationController,
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   //-------------------------------------------------------------------------------------------------
+
+  void _transformationZoomIn() {
+    setState(() {
+      _transformationController.value *= Matrix4.diagonal3Values(
+        1.1,
+        1.1,
+        1,
+      );
+    });
+  }
+
+  void _zoomAtPosition(Offset position) {
+    // Calculate the focal point in the transformed coordinate space
+    final currentMatrix = _transformationController.value;
+
+    // Get the size of the transformation widget (approximate)
+    final focalX = position.dx;
+    final focalY = position.dy;
+
+    // Create zoom transformation centered at the tap point
+    final zoom = Matrix4.identity()
+      ..translate(focalX, focalY)
+      ..scale(2.1, 2.1, 1.0)
+      ..translate(-focalX, -focalY);
+
+    setState(() {
+      _transformationController.value = currentMatrix * zoom;
+    });
+  }
+
+  void _transformationReset() {
+    setState(() {
+      _transformationController.value = Matrix4.identity();
+    });
+  }
 }
 
 class _ChartTitle extends StatelessWidget {

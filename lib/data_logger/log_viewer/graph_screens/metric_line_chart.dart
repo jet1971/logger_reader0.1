@@ -76,7 +76,7 @@ class MetricLineChart extends StatelessWidget {
         aspectRatio: aspectRatio,
         child: Padding(
           padding:
-              const EdgeInsets.all(16), // small fix from EdgeInsetsGeometry
+              const EdgeInsets.fromLTRB(16, 6, 16, 6), // small fix from EdgeInsetsGeometry
           child: LineChart(
             transformationConfig: FlTransformationConfig(
               scaleAxis: FlScaleAxis.horizontal,
