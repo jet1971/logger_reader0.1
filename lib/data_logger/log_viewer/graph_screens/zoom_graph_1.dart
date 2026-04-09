@@ -142,18 +142,15 @@ class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
         'timestamp',
         2000); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
     //  print('rpmSpots $rpmSpots');
-    List<FlSpot> oilTemperatureSpots = _convertToSpotsWithFilter(
+    List<FlSpot> airboxPressureSpots = _convertToSpotsWithFilter(
         lapData,
-        'oilTemperature',
+        'airboxPressure',
         'timestamp',
-        2000); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
-    //  print('rpmSpots $rpmSpots');
+        5); //dataName, timestamp, threshold, if for example the speed is 10 and the next is 100, it will be skipped
+    List<FlSpot> oilTemperatureSpots =
+        _convertToSpotsWithFilter(lapData, 'oilTemperature', 'timestamp', 2000);
 
-    // Ensure focus is requested after build so focus isn't lost when parent widgets
-    // change.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!focusNode.hasFocus) focusNode.requestFocus();
-    });
+    //  print('rpmSpots $rpmSpots');
 
     // Use Shortcuts/Actions entirely (avoid KeyboardListener) so we don't
     // attach the same `focusNode` to multiple Focus widgets and create
@@ -230,7 +227,6 @@ class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
           //---------------------------------------------------------------------------------------------
         },
         child: Focus(
-          autofocus: true,
           focusNode: focusNode,
           onFocusChange: (hasFocus) {
             if (!hasFocus) {
@@ -307,6 +303,48 @@ class _ZoomedGraphsState extends ConsumerState<ZoomedGraphs> {
                           setState(() => touchIndex = idx);
                         },
                       ),
+                      
+                      //=================================AIR BOX PRESSURE ===============================================
+                      MetricLineChart(
+                        minY: airboxPressureSpots.isNotEmpty
+                            ? airboxPressureSpots
+                                    .map((spot) => spot.y)
+                                    .reduce((a, b) => a < b ? a : b) +
+                                -1
+                            : 0,
+                        maxY: airboxPressureSpots.isNotEmpty
+                            ? airboxPressureSpots
+                                    .map((spot) => spot.y)
+                                    .reduce((a, b) => a > b ? a : b) +
+                                1 // 2 kpa above max for breathing room
+                            : 100, // Default max if no data
+
+                        dashLineY:
+                            101, // dashed reference line at 101 kpa (atmospheric pressure)
+                        spots: airboxPressureSpots.isNotEmpty
+                            ? airboxPressureSpots
+                            : [
+                                FlSpot(0, 0)
+                              ], // Show an empty chart if no data (or could show a placeholder point)
+                        yLabel: 'Airbox Pressure',
+                        color: const Color.fromARGB(255, 221, 233, 243),
+                        dashLineColour: Colors.amber,
+                        panEnabled: _isPanEnabled,
+                        scaleEnabled: _isScaleEnabled,
+                        transformationController: _transformationController,
+                        touchIndex: touchIndex,
+                        bottomTitleBuilder: (x) =>
+                            x.toInt().toString(), // or format timestamp
+                        onTouch: (idx, x, y) {
+                          final ts = x.toInt();
+                          ref
+                              .read(currentTimeStampProvider.notifier)
+                              .setScreenPositionTimeStamp(ts);
+                          ref.read(indexProvider.notifier).setIndex(idx);
+                          setState(() => touchIndex = idx);
+                        },
+                      ),
+                      //================================================================================
                       MetricLineChart(
                         minY: 10,
                         maxY: afrSpots.isNotEmpty

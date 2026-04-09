@@ -29,6 +29,7 @@ double batteryVoltageDouble = 0.0;
 int rawLambda = 0;
 double afr = 0;
 int oilTemperature = 0;
+int airboxPressure = 0;
 
 final StreamController<Map<String, dynamic>> streamController =
     StreamController.broadcast();
@@ -118,6 +119,8 @@ class _SettingsState extends State<Settings> {
           afr = (rawLambda / 100.0) * 14.7;
           afr = double.parse(afr.toStringAsFixed(2));
           oilTemperature = data['oilTemp'] ?? 0;
+          airboxPressure = data['ipressure'] ?? 0;
+         
 
           streamController.add({
             'raw': rawTpsValue,
@@ -371,6 +374,11 @@ class _SettingsState extends State<Settings> {
                         setState(() {}); // 👈 Rebuild Settings UI
                       },
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  ParameterToAdjust(
+                    title: 'Airbox Pressure',
+                    value: '$airboxPressure kPa',
                   ),
                   const SizedBox(height: 20),
                   ParameterToAdjust(

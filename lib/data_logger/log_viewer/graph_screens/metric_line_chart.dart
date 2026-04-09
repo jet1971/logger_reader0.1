@@ -22,10 +22,12 @@ class MetricLineChart extends StatelessWidget {
     this.lineWidth = 1.0,
     this.touchThreshold = 5,
     this.showBottomTitle = false,
+    this.dashLineY,
     required this.minY,
     required this.maxY,
   });
 
+  final double? dashLineY;
   final List<FlSpot> spots;
   final String yLabel;
   final Color color;
@@ -88,6 +90,14 @@ class MetricLineChart extends StatelessWidget {
               
             ),
             LineChartData(
+              extraLinesData: ExtraLinesData(horizontalLines: [
+                HorizontalLine(
+                  y: dashLineY ?? 0,
+                  color: dashLineColour,
+                  strokeWidth: .4,
+                  dashArray: [6, 4],
+                ),
+              ]),
               minY: minY,
               maxY: maxY,
               lineBarsData: [

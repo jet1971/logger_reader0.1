@@ -187,7 +187,7 @@ class _SideBarValuesState extends ConsumerState<SideBarValues> {
               valuesTextColor: valueTextColor),
                   const SizedBox(height: 20),
           ValuesText(
-              title: 'Airbox Pressure (PSI)',
+              title: 'Air Pressure (KPA)',
               value: findClosestEntry(
                 targetTimestamp: targetTimestamp,
                 data: ref.read(dataLogProvider.notifier).getLap(selectedLap),

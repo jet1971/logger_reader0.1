@@ -412,7 +412,7 @@ class _NotesFormState extends ConsumerState<NotesForm> {
 
                               DataRow(
                                 cells: <DataCell>[
-                                  DataCell(Text('Max Advance')),
+                                  DataCell(Text('Advance at Peak')),
                                   DataCell(TextField(
                                     controller: maxAdvanceController,
                                     maxLength: 3,

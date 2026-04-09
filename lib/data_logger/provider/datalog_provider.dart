@@ -122,8 +122,9 @@ class DataLogProvider extends StateNotifier<Uint8List> {
       double afr = (lambdaRaw / 100.0) * 14.7;
       double modAfr = double.parse(afr.toStringAsFixed(2));
       double modBatteryVoltage = bVoltage / 10.0;
-      double modAirBoxPressure =
-          double.parse((airBoxPressure * 0.1450377).toStringAsFixed(2));
+      double modAirBoxPressure = airBoxPressure.toDouble(); // Assuming it's already in KPA, no conversion needed
+      // double modAirBoxPressure =
+      //     double.parse((airBoxPressure * 0.1450377).toStringAsFixed(2));
          
 
       final entry = {
